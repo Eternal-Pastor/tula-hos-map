@@ -1,15 +1,23 @@
-param([string]$Distribution='Ubuntu-24.04')
+param([string]$Distribution='Ubuntu-24.04', [switch]$ExistingOnly)
 $ErrorActionPreference = 'Stop'
 if ($Distribution -notmatch '^[A-Za-z0-9.-]+$') { throw 'Invalid WSL distribution name.' }
+if ($ExistingOnly) {
+    # A release may contain the launch scripts without local, multi-gigabyte graphs.
+    # Diagnose that before the preparation script can install packages or download images.
+    $routingMissing = @('osrm/region.source', 'runtime/osrm-image.txt', 'osrm/car/prepared.txt', 'osrm/car/region.osrm.cell_metrics', 'osrm/foot/prepared.txt', 'osrm/foot/region.osrm.cell_metrics') |
+        Where-Object { -not (Test-Path -LiteralPath (Join-Path $PSScriptRoot $_) -PathType Leaf) }
+    if ($routingMissing) { throw ('Existing OSRM graphs are unavailable. Missing: ' + ($routingMissing -join ', ') + '. No installation or download was performed.') }
+}
 $routingDistributions = @((& wsl.exe --list --quiet) | ForEach-Object { ($_ -replace "`0", '').Trim() })
 if ($LASTEXITCODE -ne 0) { throw 'WSL is not ready. Complete Enable-WSL.ps1 and restart Windows first.' }
 if ($routingDistributions -notcontains $Distribution) {
+    if ($ExistingOnly) { throw "Existing WSL distribution '$Distribution' is unavailable. No installation was performed." }
     & wsl.exe --install --distribution $Distribution --web-download --no-launch
     if ($LASTEXITCODE -ne 0) { throw 'Ubuntu installation failed. Complete Windows setup/restart before retrying.' }
 }
 $routingLinuxRoot = (& wsl.exe --distribution $Distribution --user root -- wslpath -a $PSScriptRoot).Trim()
 if ($LASTEXITCODE -ne 0 -or -not $routingLinuxRoot.StartsWith('/')) { throw 'Cannot access project directory from WSL.' }
-& wsl.exe --distribution $Distribution --user root -- bash "$routingLinuxRoot/prepare-osrm-wsl.sh" $routingLinuxRoot
+& wsl.exe --distribution $Distribution --user root -- bash "$routingLinuxRoot/prepare-osrm-wsl.sh" $routingLinuxRoot $(if ($ExistingOnly) { 'existing-only' } else { 'prepare' })
 if ($LASTEXITCODE -ne 0) { throw 'OSRM setup failed. See runtime/osrm-setup.log.' }
 & (Join-Path $PSScriptRoot 'Keep-OSRM-WSL.ps1') -Distribution $Distribution
 foreach ($routingPort in @(5000,5001)) {

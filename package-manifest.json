@@ -1,172 +1,238 @@
 {
+  "schemaVersion": 2,
   "application": "tula-hospital-map",
-  "version": "1.0.0",
-  "build": "ba5bd309793d03a2",
-  "siteRevision": "4cd7ad5c4ea1ed19557dfcb20a480b0dffef16ad",
+  "version": "2.0.0",
+  "build": "90ab79ada96bde78",
+  "runtimeRequired": [
+    "hospital-map/README.md",
+    "hospital-map/assets/developer-controller-DNlSZBDC.js",
+    "hospital-map/assets/developer-u25_ytTk.js",
+    "hospital-map/assets/geist-cyrillic-ext-wght-normal-DjL33-gN.woff2",
+    "hospital-map/assets/geist-cyrillic-wght-normal-BEAKL7Jp.woff2",
+    "hospital-map/assets/geist-latin-ext-wght-normal-DC-KSUi6.woff2",
+    "hospital-map/assets/geist-latin-wght-normal-BgDaEnEv.woff2",
+    "hospital-map/assets/geist-vietnamese-wght-normal-6IgcOCM7.woff2",
+    "hospital-map/assets/table-4z1lxWET.css",
+    "hospital-map/assets/table-Dqbf3NoN.js",
+    "hospital-map/assets/viewer-Ck_00mWl.css",
+    "hospital-map/assets/viewer-DHlfILO1.js",
+    "hospital-map/assets/worker-client-R7FQIYrr.js",
+    "hospital-map/data.js",
+    "hospital-map/developer.html",
+    "hospital-map/index.html",
+    "hospital-map/region.js",
+    "hospital-map/vendor/NOTICE.txt",
+    "hospital-map/vendor/UI-NOTICES.txt",
+    "hospital-map/vendor/clipper.LICENSE",
+    "hospital-map/vendor/clipper.NOTICE.txt",
+    "hospital-map/vendor/d3-delaunay.LICENSE",
+    "hospital-map/vendor/react-dom.LICENSE",
+    "hospital-map/vendor/react.LICENSE",
+    "hospital-map/viewer-config.js",
+    "hospital-map/viewer-data.js",
+    "hospital-map/workers/accessibility.js",
+    "hospital-map/workers/zones.js"
+  ],
   "files": {
-    ".gitattributes": {
-      "bytes": 71,
-      "sha256": "4c3e25f80f5f062856e7f1283feb9fbffe0a1b6cd4fdcae6609fac996163bfb4"
+    "README.md": {
+      "bytes": 7563,
+      "sha256": "3017030605f2f6c0d28cef085ad90c973ad81170e23c1b52bb42e7ce9b3b2abe"
     },
-    ".gitignore": {
-      "bytes": 88,
-      "sha256": "3994cdb4a59e91bba3aa2d9fe8b485e43eaf9eb2ff744fecb4b6cc0dfbe90a69"
+    "START.cmd": {
+      "bytes": 205,
+      "sha256": "4ab0d8552a4ef55a9685ca80d3f84972b9deeb1bfeb50cd6fe3507b8945cfa6a"
     },
     "data/full-project.json": {
       "bytes": 34302938,
       "sha256": "99e629c34076ff6de23bcadf740219d22615bb56299c83b277d20b6bcc1b10cf"
     },
     "docs/DEVELOPER.md": {
-      "bytes": 78865,
-      "sha256": "c6a0eb0020896742d8116ecef1bed4a930896524ba0f1d32ddf6e5f3bd587056"
+      "bytes": 15384,
+      "sha256": "5492376cb9127f6487912587f678fc395bfbaace81fd5814576a4a6b30efc74e"
     },
-    "hospital-map/accessibility-ui.js": {
-      "bytes": 20614,
-      "sha256": "7173ada89206cdf08da1fd6885c719650f940fa8967e2911147b3bcb0c9bb3b2"
+    "docs/MIGRATION.md": {
+      "bytes": 5668,
+      "sha256": "27fd3453478ba86eb333053494e4880d5f9c80182e2c97bdce566914aedd5980"
     },
-    "hospital-map/accessibility-worker-source.js": {
-      "bytes": 10940,
-      "sha256": "9f891259c8cc04bef2739744dab472223754620c9bc25303b19994209b691b3a"
+    "docs/REFACTORING.md": {
+      "bytes": 5737,
+      "sha256": "ee4cbcafe90f8b581230b731a072400a199faf8fd6d0ffd1a86d3e76f10b6fc5"
     },
-    "hospital-map/accessibility-worker.js": {
-      "bytes": 308,
-      "sha256": "e81669bb0dcc0584bd6b3b36e0649f91fd30cb6c2329d1fd0df39f9f653522cb"
+    "docs/RELEASE-2026-10-27.md": {
+      "bytes": 16758,
+      "sha256": "1c7fdf320327163adb86618122ff5cce74f110373ed4c178dbb823d7b1980a2e"
     },
-    "hospital-map/accessibility.js": {
-      "bytes": 10427,
-      "sha256": "27f46a9cbb6a2fb4de47ac916b804ed8ab6f17682944b8ca9c0fc4589bc7d0b1"
+    "docs/SHADCN.md": {
+      "bytes": 12779,
+      "sha256": "f22d127d98aef13997770188b031d7cc221315132a5b17be9d32149e46088bd2"
     },
-    "hospital-map/app.js": {
-      "bytes": 95358,
-      "sha256": "0e275a6e619b0383e5e0f0ea795ff47ba1625cd1fbefbaffa1a35123a7b640ba"
+    "docs/route-snapshot-audit.json": {
+      "bytes": 12079,
+      "sha256": "2a3045127bd22d3e030f450032ff2ad14306468976a5a5400e66fbbec9e93983"
     },
-    "hospital-map/backup.js": {
-      "bytes": 4476,
-      "sha256": "9508b5d2aada773fa2b87899f326be144c373a49c89b20433b2d6c9aa81fd088"
+    "docs/screenshots/developer-shadcn-cell.png": {
+      "bytes": 73321,
+      "sha256": "5a2e712ed71b07570803e6ccc443b2ffacee8babeed3605bca7963ee84c411b7"
     },
-    "hospital-map/cache.js": {
-      "bytes": 9282,
-      "sha256": "b71c10b4882ccb43ce568fded188674a5641b09ea1c2db95f2307afb96dad977"
+    "docs/screenshots/developer-shadcn-error.png": {
+      "bytes": 52628,
+      "sha256": "728f51f1199d7a3c5b23ca639eb7db22d7159f666a7867c072a52c7c67c65375"
     },
-    "hospital-map/core.js": {
-      "bytes": 4810,
-      "sha256": "7bd9485822079b72c9aebc8780d4fe09469139f86a8d1a0ae7feaed412a47a4e"
+    "docs/screenshots/developer-shadcn-mobile.png": {
+      "bytes": 37334,
+      "sha256": "d93a3c2aa676f9aa7b5b37838303115de500398fcd426551d308183fd95cb138"
+    },
+    "docs/screenshots/developer-shadcn.png": {
+      "bytes": 191217,
+      "sha256": "28e88b214f72f3691c037fb7380c801c6df1aefce6e338ab3442d63a7bf68a70"
+    },
+    "docs/screenshots/developer-tables.png": {
+      "bytes": 90112,
+      "sha256": "e7d9fbed138b749dac07fc35ecc66585c5d9513f1e700d634eb5b8231fd175f4"
+    },
+    "docs/screenshots/developer-walking-hour-2026-10-27.png": {
+      "bytes": 129713,
+      "sha256": "71162f8e043d0c8f183013dd6fdd148cfc12e95899f016189eb3b327a207176f"
+    },
+    "docs/screenshots/developer.jpg": {
+      "bytes": 121213,
+      "sha256": "7d9836039204040570df9138d417c144586726d50183740243c6a1a46e15a8aa"
+    },
+    "docs/screenshots/viewer-shadcn-mobile.png": {
+      "bytes": 62956,
+      "sha256": "b3b9f91f3d1068f7ee8309efc4d9b010a9eac515cddd991dc2a9c364fc8693ea"
+    },
+    "docs/screenshots/viewer-shadcn.png": {
+      "bytes": 171131,
+      "sha256": "d2d66e8c63ef71fd5011802408f3f751d2f6a341cf69366af6bb27d9dbe2b67a"
+    },
+    "docs/screenshots/viewer.jpg": {
+      "bytes": 113583,
+      "sha256": "f69fc63c7c2b73c7e612b1d7998648b34ecaf3286cd84aa1882a997d59ad8d94"
+    },
+    "docs/screenshots/walking-hour-2026-10-27.png": {
+      "bytes": 119728,
+      "sha256": "be0566ad42ba8841170e7d99854923d2ca1f896a6b14830b270676d2835985a8"
+    },
+    "docs/screenshots/zones-no-legend-2026-10-27.png": {
+      "bytes": 116131,
+      "sha256": "8835ed953fc572941f6a08624a5216aa95a0ffa40e9d9e776fee71249b6931d3"
+    },
+    "docs/verification.md": {
+      "bytes": 10484,
+      "sha256": "5cf1ecbc3750d8b3a09aeeba71614cb7afc76fc990c664c38c900200667111ea"
+    },
+    "hospital-map/README.md": {
+      "bytes": 580,
+      "sha256": "555ec4827eee3b00f7d91f4efbfd8251af0e48401292d729f43b36374fb1f04c"
+    },
+    "hospital-map/assets/developer-controller-DNlSZBDC.js": {
+      "bytes": 74028,
+      "sha256": "e0297359869b9b5acf98c9b8d1e277041be81fb3c0637f574fc03e7533eaf8fe"
+    },
+    "hospital-map/assets/developer-u25_ytTk.js": {
+      "bytes": 130287,
+      "sha256": "62c73233889489051b621775d01b34cbdfa69ca70cb922e0ac9c5aaaf968c9a2"
+    },
+    "hospital-map/assets/geist-cyrillic-ext-wght-normal-DjL33-gN.woff2": {
+      "bytes": 7420,
+      "sha256": "2317fa4bb293c9c0b110e18315d529235c47a0ddd3338cea3d8c7955e927899e"
+    },
+    "hospital-map/assets/geist-cyrillic-wght-normal-BEAKL7Jp.woff2": {
+      "bytes": 15084,
+      "sha256": "6894439694946a589d157ece003086960a6a4013d74a813dab7602efdb3d8c09"
+    },
+    "hospital-map/assets/geist-latin-ext-wght-normal-DC-KSUi6.woff2": {
+      "bytes": 16512,
+      "sha256": "824f485b5d26e2f2da3c2b236132ece1bc8e4e43373452950bb0e40548b4313f"
+    },
+    "hospital-map/assets/geist-latin-wght-normal-BgDaEnEv.woff2": {
+      "bytes": 29400,
+      "sha256": "19f9c92546aa300c312235e3125af1b81394d8db9a4bc4a425cd5b641d2d54e1"
+    },
+    "hospital-map/assets/geist-vietnamese-wght-normal-6IgcOCM7.woff2": {
+      "bytes": 8004,
+      "sha256": "8fa40e5d248247735eb97a0bd593b8852440430600d6ba01364c31fe0abc1fe1"
+    },
+    "hospital-map/assets/table-4z1lxWET.css": {
+      "bytes": 68111,
+      "sha256": "76dc528589ddc111403e5f7037452560629c7ade1f18130ac44951798703469f"
+    },
+    "hospital-map/assets/table-Dqbf3NoN.js": {
+      "bytes": 355365,
+      "sha256": "f152e1b0f78e69bc5a1e8d85cc1a62abaa57d056501f9a3dde1a080bc3d60364"
+    },
+    "hospital-map/assets/viewer-Ck_00mWl.css": {
+      "bytes": 5401,
+      "sha256": "fbcf42a3421e0f38afb9be0aa84be23fad6b06d933aca617ea591dfd82c7459d"
+    },
+    "hospital-map/assets/viewer-DHlfILO1.js": {
+      "bytes": 155771,
+      "sha256": "f73ae0d04bcef9103e09e6e93e25e13287087ce830b3d2ff2340440923e3e879"
+    },
+    "hospital-map/assets/worker-client-R7FQIYrr.js": {
+      "bytes": 603,
+      "sha256": "24ac6f57592a700fcb1a8ca61d6ea3ad269093f8f21d17343a5201f962fef192"
     },
     "hospital-map/data.js": {
       "bytes": 3551276,
       "sha256": "19faaf34f6dc14719239008a0131bad12148e9883200c730058316b2a79aea47"
     },
-    "hospital-map/developer-gate.js": {
-      "bytes": 1213,
-      "sha256": "d40dd1d42154d75872b6a590b3a0d2283c0b2ff058238da3dfc720ca58e98b92"
-    },
     "hospital-map/developer.html": {
-      "bytes": 27655,
-      "sha256": "31745f3d9563cc925a3525cbcd1e14b5fcc58ce7bf622a6a0df63fedc5cb1dac"
+      "bytes": 778,
+      "sha256": "2a6e5c73659a12fcf42dfd430d723763f86fe1a50b6979ced75fa8b075506731"
     },
     "hospital-map/index.html": {
-      "bytes": 4655,
-      "sha256": "140e8974a80c75725ebb1d4cfe1ffa83d26ab00b1dcad941be542d8d30f75a01"
-    },
-    "hospital-map/README.md": {
-      "bytes": 78865,
-      "sha256": "c6a0eb0020896742d8116ecef1bed4a930896524ba0f1d32ddf6e5f3bd587056"
+      "bytes": 975,
+      "sha256": "e8199536716fd45f29fd163c02e79f12ec5209862ea0248c325059809e2fb0c4"
     },
     "hospital-map/region.js": {
       "bytes": 180204,
       "sha256": "4888087e6fca098b79ea358f7884bc684ffe1988d78b9c6dce716e27ba8fc470"
     },
-    "hospital-map/routing-http.js": {
-      "bytes": 5553,
-      "sha256": "f7f88128ac6116c816b014ecf751dffcaae09d03f3112ad574ca2d38d9a9ccd2"
+    "hospital-map/vendor/NOTICE.txt": {
+      "bytes": 1028,
+      "sha256": "d945f6d9e613e967a2355adeac905f7bc9054dba3bc7c0d34ac5330cca0a3f6a"
     },
-    "hospital-map/routing-osrm.js": {
-      "bytes": 5607,
-      "sha256": "fe973758cd548c491203102e4cbc9b4365586f1c44f27b8723f4aa94ce7de165"
-    },
-    "hospital-map/serve.py": {
-      "bytes": 1202,
-      "sha256": "0e95389dd6c4626e88e193e76413fcaa9b69a9d3ad00206ed77c8bfb09a71842"
-    },
-    "hospital-map/start-localhost.cmd": {
-      "bytes": 40,
-      "sha256": "b14d95775ef319759e6e09388a51019f254d9340a820804b8847661dda034b6b"
-    },
-    "hospital-map/styles.css": {
-      "bytes": 16158,
-      "sha256": "79ce5981ad3ce3e2e27de88c5fa0dcfdbfb70bd6b114ef263932b5bfad5a5f7d"
-    },
-    "hospital-map/territories.js": {
-      "bytes": 9710,
-      "sha256": "3295b8bed2eab2b4b6accbc7572886f9045b0dbdc0dbbd51e7f44fc4872ef3fa"
-    },
-    "hospital-map/vendor/clipper.js": {
-      "bytes": 203786,
-      "sha256": "a650c6946682edc1a64016f6553eeb5c32ce45eb7ca0ad5d8221961af011d97c"
+    "hospital-map/vendor/UI-NOTICES.txt": {
+      "bytes": 74202,
+      "sha256": "70b4e1bfd657e5b1d9e7586ba5b5e7f3e51813cd7fd6990310e38adc579038f4"
     },
     "hospital-map/vendor/clipper.LICENSE": {
       "bytes": 1338,
       "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
     },
+    "hospital-map/vendor/clipper.NOTICE.txt": {
+      "bytes": 5498,
+      "sha256": "83b78dac5bb713291b76a03763666be1fa36d4e4300121469424942112315224"
+    },
     "hospital-map/vendor/d3-delaunay.LICENSE": {
       "bytes": 757,
       "sha256": "582c3022bd01942336095f92b58a90b1be624dc547d987555c6c956512dd24c1"
     },
-    "hospital-map/vendor/d3-delaunay.min.js": {
-      "bytes": 19071,
-      "sha256": "efc726aa8aea0897f6dda19874709d09fd791781208ed5847ef1fd36f9886b18"
+    "hospital-map/vendor/react-dom.LICENSE": {
+      "bytes": 1088,
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
     },
-    "hospital-map/vendor/NOTICE.txt": {
-      "bytes": 524,
-      "sha256": "9e5c12ac6b36959f3c18554b120849a30ee2e9d5a4aef640cfd9234c56f1772d"
+    "hospital-map/vendor/react.LICENSE": {
+      "bytes": 1088,
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
     },
     "hospital-map/viewer-config.js": {
       "bytes": 155,
       "sha256": "638cf70eef186d5002d77770cbef9ac256f6f4f9603ffa55e243da68d8b10db3"
     },
-    "hospital-map/viewer-core.js": {
-      "bytes": 1637,
-      "sha256": "4bc7a34e1dbc799131afc347e9cf188ff973fcaca9a37d7e588ad7c2f30edbad"
-    },
     "hospital-map/viewer-data.js": {
       "bytes": 508830,
       "sha256": "af969330fbae410ba119d09e8412861e16d0a77b0d8affdbeabe7f9ec35338a1"
     },
-    "hospital-map/viewer.css": {
-      "bytes": 3335,
-      "sha256": "7fb11bff863f5b855ab45fd70468afd678da52a248c8d647b1cf77359a250ad0"
+    "hospital-map/workers/accessibility.js": {
+      "bytes": 257718,
+      "sha256": "2bf5dd10c8fd36949de1860eb38ae906e0994394e7686ea3fdb5a534eb8c0cb9"
     },
-    "hospital-map/viewer.js": {
-      "bytes": 14302,
-      "sha256": "51902eeedb882a5ee0355303838e6b2de81b56e41435ec3c8fed60bd8641d30b"
-    },
-    "hospital-map/zone-jobs.js": {
-      "bytes": 2964,
-      "sha256": "fc5494845d863f56e9e582b9ac4c444e8ed84c0f3fa9c863f22896eb7f055e45"
-    },
-    "hospital-map/zones-worker-source.js": {
-      "bytes": 279287,
-      "sha256": "427f204e8086c178469328de0b323f1e868f888f598b5f5e9c2a035882cc98bc"
-    },
-    "hospital-map/zones-worker.js": {
-      "bytes": 1393,
-      "sha256": "2ec24acb2ad503b80c65be3c89fd7a82c02179f7f8857e6bc80f8dfa7fedbfa2"
-    },
-    "hospital-map/zones.js": {
-      "bytes": 18842,
-      "sha256": "fcbdde95116fbc657381d88ada200f6098014b1075d65c82ab028d93d35de8a7"
-    },
-    "local-routing/calculate-routes.cjs": {
-      "bytes": 10771,
-      "sha256": "df684578652e0458f63cedf8ee1a465f74d39d0536307b4cc7a89acd7afc0bb1"
-    },
-    "local-routing/compose.yaml": {
-      "bytes": 508,
-      "sha256": "0d6ea58413bbfddf738b6a6d02118dd240a922d96145ce0567f46ab3706928eb"
-    },
-    "local-routing/download-assets.py": {
-      "bytes": 2284,
-      "sha256": "2fbe89bc76015fad9205b57967b6ca7728c40036088035dbf6b562523ae007aa"
+    "hospital-map/workers/zones.js": {
+      "bytes": 246604,
+      "sha256": "280ed2f29c2ba3094465feefd2ff3c83763333b9f4f333552fd1d48490228477"
     },
     "local-routing/Enable-WSL.ps1": {
       "bytes": 2498,
@@ -176,41 +242,61 @@
       "bytes": 1349,
       "sha256": "cdae1735d29cdd856a3396f53c9949544a648f8096fa071e876b9277af85acf1"
     },
-    "local-routing/prepare-osrm-wsl.sh": {
-      "bytes": 3366,
-      "sha256": "e47116f737c95f732fe509aa68d2df99a8187fa1c3a29e483e4cf1ab5090f99a"
-    },
     "local-routing/Prepare-OSRM.ps1": {
       "bytes": 1251,
       "sha256": "82d4d4a5aed52965d14db9eb7a38f3d1c9908d9b66e9eb209b7ce5a1cf692a74"
     },
     "local-routing/README.md": {
-      "bytes": 13439,
-      "sha256": "bb4d000a2e285e757487085b7cf35108bce76028c5a85b8abbc44a847bf105be"
+      "bytes": 22072,
+      "sha256": "63e5a49bd9d227524201f343b1a5670dabb803c4faacc8b0d14d2bc603460310"
     },
     "local-routing/Start-OSRM-WSL.ps1": {
-      "bytes": 2128,
-      "sha256": "c654c53b9e573e93990a637a48e206dc46f0b0f2dbc59c50d58bc5ea676c3fee"
+      "bytes": 3001,
+      "sha256": "7a774a6b548c273bb9a344e20bc95f2c39de8807d1d256ff7219c87b783bc9c6"
     },
     "local-routing/Stop-OSRM-WSL.ps1": {
       "bytes": 1131,
       "sha256": "f7591583f3db70f09078bfc454c14f3592e20f1f10dc7c5ec6a17bc1aaf458cb"
     },
-    "README.md": {
-      "bytes": 6186,
-      "sha256": "00db9bde5854820f0a9b628e788dfe123cd0927d7f0bfe28ee467284b5f24992"
+    "local-routing/build-engine.mjs": {
+      "bytes": 1981,
+      "sha256": "affb44bbeafcd5e17df76c9524e3f3cabf2bc5fe70e4cb7324c4e6655cf32c86"
+    },
+    "local-routing/calculate-routes.cjs": {
+      "bytes": 12807,
+      "sha256": "eea4ae57795d5bfebcfda4aa1ae3b81bfa42deee11a8cf4bb6fac036d0227400"
+    },
+    "local-routing/compose.yaml": {
+      "bytes": 508,
+      "sha256": "0d6ea58413bbfddf738b6a6d02118dd240a922d96145ce0567f46ab3706928eb"
+    },
+    "local-routing/download-assets.py": {
+      "bytes": 2284,
+      "sha256": "2fbe89bc76015fad9205b57967b6ca7728c40036088035dbf6b562523ae007aa"
+    },
+    "local-routing/engine.cjs": {
+      "bytes": 283749,
+      "sha256": "27d9bbe3b2eb3a41296384a0bee3a3c167f2b8eb89a384555a5fa144379da775"
+    },
+    "local-routing/prepare-osrm-wsl.sh": {
+      "bytes": 4242,
+      "sha256": "c7cd01cfca07cc362c328e2ded84a4a2ab5070671fd780ecba37fee4c52e3cf6"
+    },
+    "local-routing/recalculation-status.json": {
+      "bytes": 2499,
+      "sha256": "72e9ef1774009df793382baaa041a553062bfcfabdb7fc870fb02f6900cc7fb2"
     },
     "scripts/LocalMapServer.cs": {
       "bytes": 7946,
       "sha256": "762981bfe4811cfba0f7d73c3480c6c2fd9b03b540f384b2a7e310c5f2a7b77c"
     },
     "scripts/Start-Map.ps1": {
-      "bytes": 2526,
-      "sha256": "9d53c917276bae137a17fc82108b2fc31eed8c8d9512b41bf36cc8697d801512"
+      "bytes": 4091,
+      "sha256": "208119e189c6c773c7efad363ffcda7973261817533f1621593372cfab568d44"
     },
-    "START.cmd": {
-      "bytes": 205,
-      "sha256": "4ab0d8552a4ef55a9685ca80d3f84972b9deeb1bfeb50cd6fe3507b8945cfa6a"
+    "scripts/Verify-Static.ps1": {
+      "bytes": 5675,
+      "sha256": "8bcc0f01fa5e2f1ea09134e1801839ad128d1a91c6411d30dd76823be9ee462a"
     }
   }
 }

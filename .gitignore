@@ -5,3 +5,9 @@ local-routing/osrm/
 local-routing/runtime/
 .DS_Store
 Thumbs.db
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+.tmp/
+public/workers/

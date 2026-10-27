@@ -1,0 +1,45 @@
+{
+  "checkedOn": "2026-10-27",
+  "status": "blocked-missing-local-graphs",
+  "realNewResponses": 0,
+  "canonicalDataReplaced": false,
+  "services": {
+    "auto": "http://localhost:5000/route/v1/driving",
+    "pedestrian": "http://localhost:5001/route/v1/foot"
+  },
+  "endpointChecks": { "5000": "initial connection refused; after Docker Desktop start, 3-second timeout", "5001": "initial connection refused; after Docker Desktop start, 3-second timeout" },
+  "environment": {
+    "wslDistributions": ["Ubuntu", "kali-linux", "docker-desktop"],
+    "documentedDistributionUbuntu2404Present": false,
+    "dockerDesktopStartedWithExistingCli": true,
+    "osrmContainers": 0,
+    "osrmImages": 0,
+    "osrmVolumes": 0,
+    "projectPbfAndGraphDirectoriesPresent": false,
+    "activeProfileVerified": false
+  },
+  "existingServicesAttempt": {
+    "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File local-routing/Start-OSRM-WSL.ps1 -Distribution Ubuntu -ExistingOnly",
+    "result": "Missing osrm/region.source, runtime/osrm-image.txt and both prepared OSRM graphs; no installation or download performed."
+  },
+  "freshRecalculationAttempt": {
+    "command": "node local-routing/calculate-routes.cjs --input data/full-project.json --output .tmp/recalculation/hospital-project-auto-2026-10-27.json --mode auto --fresh",
+    "result": "Cannot verify the OSRM graph because its metadata and prepared profile are absent; no route answers or replacement snapshot produced."
+  },
+  "preservedSnapshot": {
+    "hospitals": 38,
+    "cells": 1942,
+    "step": 5000,
+    "osrmResponses": 3884,
+    "auto": { "found": 1258, "NoSegment": 669, "NoRoute": 15, "neighborEstimates": 684 },
+    "pedestrian": { "found": 1733, "NoSegment": 207, "NoRoute": 2, "neighborEstimates": 209 },
+    "backupChecksum": "7f9115984e08b158e304c4b4e842fda37a7acc40f92c78f4bfef36992e80477a"
+  },
+  "remainingWork": [
+    "Restore the real OSM input and separately prepared car.lua and foot.lua graphs, or deliberately prepare them on a suitable machine.",
+    "Verify actual running container mounts, image digest, prepared graph identity and representative route/nearest responses.",
+    "Run a fresh auto-only recalculation to a new output file; use the same input/output to resume a stopped run.",
+    "Publish the completed real output with its verified receipt, rebuild the static snapshot and package, then verify the extracted release."
+  ],
+  "primaryDocumentation": "https://project-osrm.org/docs/v5.24.0/api/"
+}

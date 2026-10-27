@@ -6,9 +6,31 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 $packageRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $mapRoot = Join-Path $packageRoot 'hospital-map'
-$manifest = Get-Content -LiteralPath (Join-Path $packageRoot 'package-manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-if (!(Test-Path -LiteralPath (Join-Path $mapRoot 'index.html')) -or !(Test-Path -LiteralPath (Join-Path $mapRoot 'viewer-data.js'))) {
-    throw 'Extract the complete ZIP archive before running START.cmd.'
+$manifestPath = Join-Path $packageRoot 'package-manifest.json'
+if (!(Test-Path -LiteralPath $manifestPath)) { throw 'Extract the complete ZIP archive before running START.cmd: package-manifest.json is missing.' }
+$manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+if ($manifest.schemaVersion -ne 2 -or !$manifest.build -or !$manifest.runtimeRequired) {
+    throw 'The static build manifest is missing or outdated. Developers: run npm run build before starting the map.'
+}
+# Only Windows PowerShell and .NET are needed here. Never invoke npm or Node.js.
+# Resolve and verify every built resource, including both pages and Workers.
+function Get-StaticFileHash([string]$FilePath) {
+    $stream = [IO.File]::OpenRead($FilePath)
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($hasher.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() }
+    finally { $hasher.Dispose(); $stream.Dispose() }
+}
+foreach ($relative in $manifest.runtimeRequired) {
+    $resourcePath = [IO.Path]::GetFullPath((Join-Path $packageRoot $relative))
+    $expected = $manifest.files.PSObject.Properties[$relative].Value
+    if (!$resourcePath.StartsWith($packageRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or !$expected) {
+        throw "Invalid resource path in package manifest: $relative"
+    }
+    if (!(Test-Path -LiteralPath $resourcePath -PathType Leaf)) { throw "The static package is incomplete: $relative. Extract the complete archive or rebuild it with npm run build." }
+    $file = New-Object IO.FileInfo($resourcePath)
+    if ($file.Length -ne $expected.bytes -or (Get-StaticFileHash $resourcePath) -ne $expected.sha256) {
+        throw "The static package contains a changed or incomplete resource: $relative. Rebuild it with npm run build or extract the complete archive."
+    }
 }
 $sha = [Security.Cryptography.SHA256]::Create()
 try { $rootIdentity = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($packageRoot.ToLowerInvariant())))).Replace('-','').ToLowerInvariant() }

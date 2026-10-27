@@ -5,6 +5,20 @@ mkdir -p runtime osrm
 exec > >(tee -a runtime/osrm-setup.log) 2>&1
 trap 'echo "OSRM setup failed at line $LINENO. Existing browser data was not changed."' ERR
 echo "$(date -Is) Starting local OSRM setup"
+if [[ "${2:-prepare}" == existing-only ]]; then
+  command -v docker >/dev/null && docker compose version >/dev/null 2>&1 || { echo 'Existing Docker Engine/Compose are unavailable. No installation was performed.'; exit 1; }
+  test -s runtime/osrm-image.txt && test -s osrm/region.source || { echo 'Prepared graph metadata is unavailable.'; exit 1; }
+  OSRM_IMAGE="$(cat runtime/osrm-image.txt)"
+  export OSRM_IMAGE
+  docker info >/dev/null 2>&1 || service docker start
+  docker image inspect "$OSRM_IMAGE" >/dev/null 2>&1 || { echo 'Prepared OSRM image is absent. No download was performed.'; exit 1; }
+  for mode in car foot; do
+    test -s "osrm/$mode/prepared.txt" && test -s "osrm/$mode/region.osrm.cell_metrics" || { echo "Prepared $mode graph is absent."; exit 1; }
+  done
+  docker compose up -d --pull never --no-build osrm-car osrm-foot
+  docker compose ps
+  exit 0
+fi
 if ! command -v docker >/dev/null || ! docker compose version >/dev/null 2>&1 || ! command -v osmium >/dev/null; then
   export DEBIAN_FRONTEND=noninteractive
   apt-get update

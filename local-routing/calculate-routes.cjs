@@ -1,12 +1,16 @@
 /* Batch routing to loopback OSRM only; emits a normal transferable project backup. */
 'use strict';
-const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
-const site=[path.resolve(__dirname,'../outputs/hospital-map'),path.resolve(__dirname,'../hospital-map')].find(folder=>fs.existsSync(path.join(folder,'data.js')));
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto');
+const site=[path.resolve(__dirname,'../public'),path.resolve(__dirname,'../hospital-map')].find(folder=>fs.existsSync(path.join(folder,'data.js')));
 if(!site)throw new Error('Cannot locate the hospital-map site next to local-routing.');
-const A=require(path.join(site,'accessibility.js')),O=require(path.join(site,'routing-osrm.js')),B=require(path.join(site,'backup.js')),C=require(path.join(site,'core.js')),L=require(path.join(site,'cache.js')),T=require(path.join(site,'territories.js'));
+const {A,O,B,C,L,T}=require('./engine.cjs');
 const DEFAULTS={auto:'http://localhost:5000/route/v1/driving',pedestrian:'http://localhost:5001/route/v1/foot'};
 const metadata=name=>{try{return fs.readFileSync(path.join(__dirname,name),'utf8').trim();}catch(_){return null;}};
-const graphIdentity=()=>({image:metadata('runtime/osrm-image.txt'),source:metadata('osrm/region.source')});
+const graphIdentity=()=>({image:metadata('runtime/osrm-image.txt'),source:metadata('osrm/region.source'),profiles:{auto:metadata('osrm/car/prepared.txt'),pedestrian:metadata('osrm/foot/prepared.txt')}});
+function validatedGraph(graph,modes){
+ if(!graph?.image||!graph.source||modes.some(mode=>!graph.profiles?.[mode]))throw new Error('Cannot verify the OSRM graph: missing runtime/osrm-image.txt, osrm/region.source or the selected profile prepared.txt. Restore the prepared local graphs before recalculating.');
+ return {image:graph.image,source:graph.source,profiles:Object.fromEntries(modes.map(mode=>[mode,graph.profiles[mode]]))};
+}
 function localServices(value=DEFAULTS){
  const result=O.config(value);
  for(const url of Object.values(result))if(!['localhost','127.0.0.1','[::1]'].includes(new URL(url).hostname))throw new Error('Mass routing is restricted to local OSRM. Public servers are not allowed.');
@@ -38,36 +42,48 @@ async function loadProject(file){
  if(JSON.stringify(inputs)!==base.signature)throw new Error('Base vectors do not match saved addresses.');
  return {data,index,dataset,plan,coverage,hospitals,raw};
 }
-async function run({input,output,concurrency=4,step=5000,services=DEFAULTS,fetcher=fetch,signal,onProgress=()=>{},limit=Infinity}){
+async function run({input,output,concurrency=4,step=5000,services=DEFAULTS,modes=O.MODES,fresh=false,fetcher=fetch,signal,onProgress=()=>{},limit=Infinity,identifyGraph=graphIdentity}){
  input=path.resolve(input);output=path.resolve(output);
  if(input===output)throw new Error('Input backup must remain unchanged; choose a separate output file.');
  fs.mkdirSync(path.dirname(output),{recursive:true});
  if(!Number.isInteger(concurrency)||concurrency<1||concurrency>8)throw new Error('Concurrency must be 1..8.');
+ if(limit!==Infinity&&(!Number.isInteger(limit)||limit<0))throw new Error('Limit must be a non-negative integer.');
+ if(!Array.isArray(modes)||!modes.length||new Set(modes).size!==modes.length||modes.some(mode=>!O.MODES.includes(mode)))throw new Error('Modes must contain auto, pedestrian, or both.');
+ modes=O.MODES.filter(mode=>modes.includes(mode));
+ if(fresh&&fs.existsSync(output))throw new Error('Fresh recalculation requires a new output file. Choose another filename, or omit --fresh to resume the verified checkpoint.');
  services=localServices(services);
  const project=await loadProject(input),{data,index,dataset,plan,coverage,hospitals}=project,ids=new Set(data.organizations.map(o=>o.id));
- const graph=graphIdentity(),targetServices=new Set(Object.values(services));
+ const graph=validatedGraph(identifyGraph(),modes);
+ const cells=A.grid(new Map(coverage.zones),step).cells,destinations=new Map(hospitals.map(o=>[o.id,o.coords]));
+ const allJobs=[...new Map(A.pending(cells,destinations,new Map(),modes,services).map(j=>[j.key,j])).values()];
+ const identity={schemaVersion:2,fresh:true,inputChecksum:project.raw.checksum,modes,services,step,graph,engineChecksum:crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname,'engine.cjs'))).digest('hex'),jobKeys:allJobs.map(j=>j.key)};
+ let runId=crypto.randomUUID();
  // Resume only this output's verified graph, not unversioned local answers from an input backup.
- const routes=new Map(plan.records.filter(r=>r.type==='route'&&!targetServices.has(r.routingService)).map(r=>[r.key,r])),fixed=plan.records.filter(r=>r.type!=='route');
+ const routes=new Map(plan.records.filter(r=>r.type==='route'&&!(modes.includes(r.mode)&&r.routingService===services[r.mode])).map(r=>[r.key,r])),fixed=plan.records.filter(r=>r.type!=='route');
  if(fs.existsSync(output)){
   const previous=await loadProject(output);
   if(previous.coverage.signature!==coverage.signature)throw new Error('Output belongs to another coverage; choose a new output file.');
-  const previousReceipt=JSON.parse(fs.readFileSync(output.replace(/\.json$/i,'')+'.receipt.json','utf8'));
-  if(JSON.stringify(previousReceipt.graph)!==JSON.stringify(graph))throw new Error('OSRM graph has changed. Use a new output file instead of resuming old routes.');
-  for(const r of B.merge([...routes.values()],previous.plan.records.filter(r=>r.type==='route')))routes.set(r.key,r);
+  const previousRun=previous.plan.routing?.recalculation;
+  // This identity is inside the backup payload and covered by its checksum.
+  // The sidecar is informative; a crash between writing both files must not lose a checkpoint.
+  if(!previousRun||Object.keys(identity).some(key=>JSON.stringify(previousRun[key])!==JSON.stringify(identity[key])))throw new Error('Checkpoint input, OSRM graph, modes, services, step or routing engine has changed. Choose a new output file.');
+  runId=previousRun.runId;
+  const keys=new Set(identity.jobKeys);
+  for(const r of previous.plan.records.filter(r=>r.type==='route'&&keys.has(r.key)))routes.set(r.key,r);
  }
- const cells=A.grid(new Map(coverage.zones),step).cells,destinations=new Map(hospitals.map(o=>[o.id,o.coords]));
- const allJobs=[...new Map(A.pending(cells,destinations,new Map(),O.MODES,services).map(j=>[j.key,j])).values()];
  const queue=allJobs.filter(j=>!routes.has(j.key)).slice(0,limit),initial=allJobs.filter(j=>routes.has(j.key)).length;
  const controller=new AbortController(),abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();
  const started=Date.now(),lock=output+'.lock';let lockFd,completed=0,cursor=0,failure=null,checkpointAt=Date.now(),checkpointCount=0,checkpoint=Promise.resolve();
- const stats=()=>({cells:cells.length,total:allJobs.length,completed:initial+completed,cached:initial,found:allJobs.filter(j=>routes.get(j.key)?.status==='found').length,unreachable:allJobs.filter(j=>routes.get(j.key)?.status==='unreachable').length,elapsedSeconds:Math.round((Date.now()-started)/1000)});
+ const stats=(saved=routes)=>({cells:cells.length,total:allJobs.length,completed:allJobs.filter(j=>saved.has(j.key)).length,cached:initial,found:allJobs.filter(j=>saved.get(j.key)?.status==='found').length,unreachable:allJobs.filter(j=>saved.get(j.key)?.status==='unreachable').length,elapsedSeconds:Math.round((Date.now()-started)/1000)});
  async function persist(){
-  if(JSON.stringify(graphIdentity())!==JSON.stringify(graph))throw new Error('OSRM graph changed during routing. Last valid checkpoint is preserved.');
-  const backup=await B.create({settings:{...plan.settings,selectedOrganization:null,showZones:true,showEmpty:true},routing:{gridPreset:'5km-current-v1',routingPreset:'osrm-trial-v1',source:'osrm',osrm:services,model:A.modelOptions(plan.routing?.model),enabled:true,mode:'auto',step,scope:'all',shape:'cells',lines:false},records:[...fixed,...routes.values()],dataset});
+  if(JSON.stringify(validatedGraph(identifyGraph(),modes))!==JSON.stringify(graph))throw new Error('OSRM graph changed during routing. Last valid checkpoint is preserved.');
+  const savedRoutes=new Map(routes),summary=stats(savedRoutes);
+  const backup=await B.create({settings:{...plan.settings,selectedOrganization:null,showZones:true,showEmpty:true},routing:{...plan.routing,gridPreset:'5km-current-v1',routingPreset:'osrm-trial-v1',source:'osrm',osrm:services,model:A.modelOptions(plan.routing?.model),enabled:true,mode:'auto',step,scope:'all',shape:'cells',lines:false,recalculation:{...identity,runId}},records:[...fixed,...savedRoutes.values()],dataset});
   const text=JSON.stringify(backup);if(Buffer.byteLength(text)>B.MAX_BYTES)throw new Error('Backup exceeds 100 MiB. Last valid checkpoint is preserved.');
   const temp=output+'.writing';await fs.promises.writeFile(temp,text);await fs.promises.rename(temp,output);
-  const summary=stats(),receipt={...summary,complete:summary.completed===summary.total,input,output,inputChecksum:project.raw.checksum,checksum:backup.checksum,services,step,graph,at:new Date().toISOString(),results:Object.fromEntries(O.MODES.map(mode=>[mode,Object.fromEntries(['found','NoRoute','NoSegment'].map(status=>[status,allJobs.filter(j=>j.mode===mode).map(j=>routes.get(j.key)).filter(r=>r&&(status==='found'?r.status==='found':r.routeReason===status)).length]))]))};
-  await fs.promises.writeFile(output.replace(/\.json$/i,'')+'.receipt.json',JSON.stringify(receipt,null,2));
+  const receipt={...identity,runId,...summary,complete:summary.completed===summary.total,input,output,checksum:backup.checksum,at:new Date().toISOString(),results:Object.fromEntries(modes.map(mode=>[mode,Object.fromEntries(['found','NoRoute','NoSegment'].map(status=>[status,allJobs.filter(j=>j.mode===mode).map(j=>savedRoutes.get(j.key)).filter(r=>r&&(status==='found'?r.status==='found':r.routeReason===status)).length]))]))};
+  const receiptPath=output.replace(/\.json$/i,'')+'.receipt.json';
+  await fs.promises.writeFile(receiptPath+'.writing',JSON.stringify(receipt,null,2));await fs.promises.rename(receiptPath+'.writing',receiptPath);
   return receipt;
  }
  function scheduleCheckpoint(){
@@ -90,10 +106,14 @@ async function run({input,output,concurrency=4,step=5000,services=DEFAULTS,fetch
   if(failure)throw failure;if(signal?.aborted)throw new DOMException('Batch routing stopped; checkpoint saved.','AbortError');return receipt;
  }finally{signal?.removeEventListener('abort',abort);if(lockFd!==undefined){fs.closeSync(lockFd);fs.unlinkSync(lock);}}
 }
-module.exports={run,loadProject,localServices};
+module.exports={run,loadProject,localServices,graphIdentity};
 if(require.main===module){
  const args=process.argv.slice(2),options={};
- for(let i=0;i<args.length;i+=2){const key=args[i];if(!['--input','--output','--concurrency','--step'].includes(key)||!args[i+1])throw new Error('Usage: node calculate-routes.cjs --input backup.json --output result.json [--concurrency 4] [--step 5000]');options[key.slice(2)]=['--step','--concurrency'].includes(key)?Number(args[i+1]):args[i+1];}
+ for(let i=0;i<args.length;i++){
+  const key=args[i];if(key==='--fresh'){options.fresh=true;continue;}
+  if(!['--input','--output','--concurrency','--step','--mode','--limit'].includes(key)||!args[i+1])throw new Error('Usage: node calculate-routes.cjs --input backup.json --output result.json [--mode auto|pedestrian|both] [--fresh] [--concurrency 4] [--step 5000] [--limit N]');
+  const value=args[++i];if(key==='--mode'){if(!['auto','pedestrian','both'].includes(value))throw new Error('Mode must be auto, pedestrian or both.');options.modes=value==='both'?O.MODES:[value];}else options[key.slice(2)]=['--step','--concurrency','--limit'].includes(key)?Number(value):value;
+ }
  if(!options.input||!options.output)throw new Error('Specify separate --input and --output backups.');
  const controller=new AbortController();process.on('SIGINT',()=>controller.abort());
  run({...options,signal:controller.signal,onProgress:s=>console.log(JSON.stringify(s))}).catch(error=>{console.error(error.message);process.exitCode=error.name==='AbortError'?130:1;});
