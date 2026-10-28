@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "application": "tula-hospital-map",
   "version": "2.0.0",
-  "build": "90ab79ada96bde78",
+  "build": "f100c55838d5f37c",
   "runtimeRequired": [
     "hospital-map/README.md",
     "hospital-map/assets/developer-controller-DNlSZBDC.js",
@@ -35,8 +35,8 @@
   ],
   "files": {
     "README.md": {
-      "bytes": 7563,
-      "sha256": "3017030605f2f6c0d28cef085ad90c973ad81170e23c1b52bb42e7ce9b3b2abe"
+      "bytes": 7441,
+      "sha256": "68a5f36c08c6ebdc6ada87f55660bddcc8b8d30025cb969b5dbe685c2294d0aa"
     },
     "START.cmd": {
       "bytes": 205,
@@ -47,80 +47,16 @@
       "sha256": "99e629c34076ff6de23bcadf740219d22615bb56299c83b277d20b6bcc1b10cf"
     },
     "docs/DEVELOPER.md": {
-      "bytes": 15384,
-      "sha256": "5492376cb9127f6487912587f678fc395bfbaace81fd5814576a4a6b30efc74e"
-    },
-    "docs/MIGRATION.md": {
-      "bytes": 5668,
-      "sha256": "27fd3453478ba86eb333053494e4880d5f9c80182e2c97bdce566914aedd5980"
-    },
-    "docs/REFACTORING.md": {
-      "bytes": 5737,
-      "sha256": "ee4cbcafe90f8b581230b731a072400a199faf8fd6d0ffd1a86d3e76f10b6fc5"
-    },
-    "docs/RELEASE-2026-10-27.md": {
-      "bytes": 16758,
-      "sha256": "1c7fdf320327163adb86618122ff5cce74f110373ed4c178dbb823d7b1980a2e"
+      "bytes": 15574,
+      "sha256": "5245d4efd49844efa5aee3bb892c48255927cd5abe8074d77e2f4fabe98337ff"
     },
     "docs/SHADCN.md": {
-      "bytes": 12779,
-      "sha256": "f22d127d98aef13997770188b031d7cc221315132a5b17be9d32149e46088bd2"
-    },
-    "docs/route-snapshot-audit.json": {
-      "bytes": 12079,
-      "sha256": "2a3045127bd22d3e030f450032ff2ad14306468976a5a5400e66fbbec9e93983"
-    },
-    "docs/screenshots/developer-shadcn-cell.png": {
-      "bytes": 73321,
-      "sha256": "5a2e712ed71b07570803e6ccc443b2ffacee8babeed3605bca7963ee84c411b7"
-    },
-    "docs/screenshots/developer-shadcn-error.png": {
-      "bytes": 52628,
-      "sha256": "728f51f1199d7a3c5b23ca639eb7db22d7159f666a7867c072a52c7c67c65375"
-    },
-    "docs/screenshots/developer-shadcn-mobile.png": {
-      "bytes": 37334,
-      "sha256": "d93a3c2aa676f9aa7b5b37838303115de500398fcd426551d308183fd95cb138"
-    },
-    "docs/screenshots/developer-shadcn.png": {
-      "bytes": 191217,
-      "sha256": "28e88b214f72f3691c037fb7380c801c6df1aefce6e338ab3442d63a7bf68a70"
-    },
-    "docs/screenshots/developer-tables.png": {
-      "bytes": 90112,
-      "sha256": "e7d9fbed138b749dac07fc35ecc66585c5d9513f1e700d634eb5b8231fd175f4"
-    },
-    "docs/screenshots/developer-walking-hour-2026-10-27.png": {
-      "bytes": 129713,
-      "sha256": "71162f8e043d0c8f183013dd6fdd148cfc12e95899f016189eb3b327a207176f"
-    },
-    "docs/screenshots/developer.jpg": {
-      "bytes": 121213,
-      "sha256": "7d9836039204040570df9138d417c144586726d50183740243c6a1a46e15a8aa"
-    },
-    "docs/screenshots/viewer-shadcn-mobile.png": {
-      "bytes": 62956,
-      "sha256": "b3b9f91f3d1068f7ee8309efc4d9b010a9eac515cddd991dc2a9c364fc8693ea"
-    },
-    "docs/screenshots/viewer-shadcn.png": {
-      "bytes": 171131,
-      "sha256": "d2d66e8c63ef71fd5011802408f3f751d2f6a341cf69366af6bb27d9dbe2b67a"
-    },
-    "docs/screenshots/viewer.jpg": {
-      "bytes": 113583,
-      "sha256": "f69fc63c7c2b73c7e612b1d7998648b34ecaf3286cd84aa1882a997d59ad8d94"
-    },
-    "docs/screenshots/walking-hour-2026-10-27.png": {
-      "bytes": 119728,
-      "sha256": "be0566ad42ba8841170e7d99854923d2ca1f896a6b14830b270676d2835985a8"
-    },
-    "docs/screenshots/zones-no-legend-2026-10-27.png": {
-      "bytes": 116131,
-      "sha256": "8835ed953fc572941f6a08624a5216aa95a0ffa40e9d9e776fee71249b6931d3"
+      "bytes": 4830,
+      "sha256": "ea690875385ba479b536b865bea3d27d7e6810a93299da3629b9d91e570cc7f6"
     },
     "docs/verification.md": {
-      "bytes": 10484,
-      "sha256": "5cf1ecbc3750d8b3a09aeeba71614cb7afc76fc990c664c38c900200667111ea"
+      "bytes": 10069,
+      "sha256": "fe6521e350dded12fcee3dc1e56771c6ff08a8ef64e2fb5a9f79bcff7a8351a6"
     },
     "hospital-map/README.md": {
       "bytes": 580,
@@ -247,8 +183,8 @@
       "sha256": "82d4d4a5aed52965d14db9eb7a38f3d1c9908d9b66e9eb209b7ce5a1cf692a74"
     },
     "local-routing/README.md": {
-      "bytes": 22072,
-      "sha256": "63e5a49bd9d227524201f343b1a5670dabb803c4faacc8b0d14d2bc603460310"
+      "bytes": 17145,
+      "sha256": "3c270c752931cb40d50560e37bb393fd8fa2d1ef232fcfb8aedee858c2250e63"
     },
     "local-routing/Start-OSRM-WSL.ps1": {
       "bytes": 3001,
@@ -281,10 +217,6 @@
     "local-routing/prepare-osrm-wsl.sh": {
       "bytes": 4242,
       "sha256": "c7cd01cfca07cc362c328e2ded84a4a2ab5070671fd780ecba37fee4c52e3cf6"
-    },
-    "local-routing/recalculation-status.json": {
-      "bytes": 2499,
-      "sha256": "72e9ef1774009df793382baaa041a553062bfcfabdb7fc870fb02f6900cc7fb2"
     },
     "scripts/LocalMapServer.cs": {
       "bytes": 7946,

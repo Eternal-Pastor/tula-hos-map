@@ -11,3 +11,5 @@ dist/
 *.tsbuildinfo
 .tmp/
 public/workers/
+.idea/
+*.iml
