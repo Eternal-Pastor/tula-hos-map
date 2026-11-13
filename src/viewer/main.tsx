@@ -1,5 +1,7 @@
 import {
   StrictMode,
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -49,6 +51,7 @@ import type { Hospital, MapMode } from "../types/domain";
 import { ViewerLegend } from "./ViewerLegend";
 import "../styles.css";
 import "../viewer.css";
+const OptimizationView = lazy(() => import('../optimization/OptimizationView'));
 
 const fmt = (value: number | null) =>
   Number.isFinite(value)
@@ -74,6 +77,7 @@ function Header() {
           <Map aria-hidden="true" />
           Карта
         </TabsTrigger>
+        <TabsTrigger value="optimization" id="viewer-optimization-tab" aria-controls="viewer-optimization-page">Оптимизация</TabsTrigger>
         <TabsTrigger
           value="table"
           id="viewer-table-tab"
@@ -515,6 +519,8 @@ function HospitalTable({
 function ViewerApp() {
   const [store] = useState(() => new ViewerStore());
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  const [optimizationOpened, setOptimizationOpened] = useState(false);
+  useEffect(() => { if (state.page === 'optimization') setOptimizationOpened(true); }, [state.page]);
   useEffect(() => {
     void store.start();
     return () => store.dispose();
@@ -539,6 +545,9 @@ function ViewerApp() {
           <MapWorkspace state={state} store={store} />
         </TabsContent>
         <HospitalTable state={state} store={store} />
+        <TabsContent value="optimization" forceMount id="viewer-optimization-page" aria-labelledby="viewer-optimization-tab" hidden={state.page !== 'optimization'}>
+          {optimizationOpened && <Suspense fallback={<p role="status">Загрузка оптимизации…</p>}><OptimizationView active={state.page === 'optimization'} /></Suspense>}
+        </TabsContent>
       </main>
     </Tabs>
   );

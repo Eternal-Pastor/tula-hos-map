@@ -21,7 +21,7 @@ import type {
 } from "../types/domain";
 
 export interface ViewerState extends ViewerSettings {
-  page: "map" | "table";
+  page: "map" | "table" | "optimization";
   hospitals: Hospital[];
   selected: string | null;
   loading: boolean;

@@ -1,0 +1,9 @@
+{
+  "snapshot": "d098703380c1f3333d15edebf11d391a5eda462472185bdcc9458f33c7c979f6",
+  "cities": "a71d9d428720cf1d5a573a69ff11d112b38ea12800fdd0d5ec3bb40bfefa0fd3",
+  "algorithm": "urban-250-rural-2000-v1",
+  "checksum": "fc3eb9ec7efcb4e440175608ff7e561cd6f0c8bc2a32219bbda7ea724fd8a916",
+  "cells": 19843,
+  "urban": 11402,
+  "rural": 8441
+}

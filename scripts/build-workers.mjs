@@ -13,6 +13,7 @@ const common = [
 const entries = {
   accessibility: [...common, 'src/engine/accessibility.js', 'src/workers/accessibility.js'],
   zones: [...common, 'src/workers/zones.js'],
+  optimization: [...common, 'src/engine/accessibility.js', 'src/engine/optimization.js', 'src/workers/optimization.js'],
 };
 
 /** Classic, self-contained workers: no eval, Blob source copies or runtime imports. */

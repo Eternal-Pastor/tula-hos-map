@@ -1,0 +1,41 @@
+.opt-sidebar section { display: grid; gap: 10px; padding: 18px 20px; border-bottom: 1px solid var(--border); }
+.opt-sidebar h2 { margin: 0; font-size: 18px; }
+.opt-note { color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+.opt-sidebar select, .opt-roster-controls select { border: 1px solid var(--border); border-radius: 7px; background: var(--background); padding: 9px; width: 100%; }
+.opt-scenario { display: flex; gap: 8px; }
+.opt-scenario button { flex: 1; }
+.opt-check { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.opt-check input, .opt-roster-table input[type=checkbox] { accent-color: var(--foreground); width: 17px; height: 17px; }
+.opt-metrics { margin: 0; display: grid; gap: 6px; font-size: 12px; }
+.opt-metrics > div { display: flex; justify-content: space-between; gap: 12px; }
+.opt-metrics dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+#optimization-map { position: absolute; inset: 0; }
+.opt-map-workspace { min-height: 500px; }
+.opt-map-toolbar { position: absolute; top: 18px; right: 18px; z-index: 5; }
+.opt-map-status { position: absolute; top: 18px; left: 18px; right: 170px; background: var(--background); border: 1px solid var(--border); padding: 12px; border-radius: 8px; z-index: 6; font-size: 12px; }
+.opt-map-status button { margin-left: 12px; }
+.opt-map-legend { position: absolute; left: 18px; bottom: 28px; max-width: min(540px, calc(100% - 36px)); padding: 14px 18px; background: var(--background); border: 1px solid var(--border); border-radius: 9px; z-index: 5; font-size: 12px; }
+.opt-map-legend p { margin: 4px 0; }
+.opt-error { color: #b42626; font-size: 12px; overflow-wrap: anywhere; }
+.opt-facilities-dialog { width: min(1400px, calc(100vw - 32px)) !important; max-width: none !important; height: min(840px, calc(100dvh - 32px)); display: flex; flex-direction: column; gap: 16px; }
+.opt-roster-controls { display: flex; flex-wrap: wrap; gap: 10px; }
+.opt-roster-controls > input { flex: 1; min-width: 220px; }
+.opt-roster-controls select { width: auto; }
+.opt-roster-table { overflow: auto; flex: 1; min-height: 0; border: 1px solid var(--border); border-radius: 8px; }
+.opt-roster-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.opt-roster-table th { position: sticky; top: 0; background: var(--background); z-index: 1; text-align: left; }
+.opt-roster-table th, .opt-roster-table td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.opt-roster-table td:nth-child(2) { min-width: 250px; max-width: 400px; }
+.opt-roster-table td:nth-child(3) { min-width: 200px; max-width: 320px; }
+.opt-roster-table td:nth-child(4) { min-width: 210px; }
+.opt-roster-table span, .opt-roster-table small, .opt-roster-table a { display: block; margin-top: 4px; }
+.opt-roster-table small { color: var(--muted-foreground); }
+.opt-roster-table a { text-decoration: underline; }
+.opt-roster-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 12px; }
+.opt-roster-footer > span:first-child { margin-right: auto; }
+@media (max-width: 760px) {
+  .opt-layout { grid-template-columns: 1fr; height: auto; }
+  .opt-sidebar { max-height: 60dvh; }
+  .opt-map-workspace { height: 75dvh; min-height: 500px; }
+  .opt-map-status { top: 65px; right: 18px; }
+}
