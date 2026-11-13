@@ -36,7 +36,7 @@ export interface ViewerState extends ViewerSettings {
 export class ViewerStore {
   private state: ViewerState = {
     ...readViewerSettings(window.HospitalViewerData.checksum),
-    page: "map",
+    page: "optimization",
     hospitals: [],
     selected: null,
     loading: true,

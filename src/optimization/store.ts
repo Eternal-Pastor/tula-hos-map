@@ -1,17 +1,17 @@
 import type { Polygon, TravelMode } from '../types/domain';
 import type { Facility, GridCell, MatrixEntry, OptimizationResult } from './types';
-import { applyFacilitySettings, digest, download, facilitySettings, loadOptimizationData } from './data';
+import { applyFacilitySettings, digest, download, facilitySettings, loadOptimizationData, loadPreparedResult } from './data';
 import { buildOutlines, optimizer } from './engine';
 import { pairKey, runMatrix } from './matrix';
 import { OptimizationStorage } from './storage';
 
 export interface OptimizationState {
-  loading: boolean; busy: boolean; error: string; status: string; count: number; total: number;
+  loading: boolean; busy: boolean; prepared: boolean; error: string; status: string; count: number; total: number;
   facilities: Facility[]; mode: TravelMode; result: OptimizationResult | null;
   scenario: 'before' | 'after'; showZones: boolean; showTimes: boolean; opacity: number; compareBoundaries: boolean;
 }
 export class OptimizationStore {
-  private state: OptimizationState = { loading: true, busy: false, error: '', status: '', count: 0, total: 0,
+  private state: OptimizationState = { loading: true, busy: false, prepared: true, error: '', status: '', count: 0, total: 0,
     facilities: [], mode: 'auto', result: null, scenario: 'before', showZones: true, showTimes: true, opacity: 0.5, compareBoundaries: false };
   private listeners = new Set<() => void>();
   private generation = 0;
@@ -19,6 +19,8 @@ export class OptimizationStore {
   private storage = new OptimizationStorage();
   private data?: Awaited<ReturnType<typeof loadOptimizationData>>;
   private saving = Promise.resolve();
+  private presentation = 0;
+  private preparedResults = new Map<TravelMode, OptimizationResult>();
   cells: GridCell[] = [];
   baseline: Facility[] = [];
   zones: [string, Polygon[]][] = [];
@@ -31,31 +33,48 @@ export class OptimizationStore {
       const data = await loadOptimizationData();
       if (generation !== this.generation) return;
       this.data = data; this.cells = data.cells; this.baseline = data.baseline; this.zones = data.snapshot.zones;
-      const saved = await this.storage.readState<{ identity: string; facilities: unknown; mode: TravelMode }>('settings');
+      const result = await loadPreparedResult('auto', data);
       if (generation !== this.generation) return;
-      const facilities = saved?.identity === data.identity ? applyFacilitySettings(data.facilities, saved.facilities) : data.facilities;
-      const mode = saved?.mode === 'pedestrian' ? 'pedestrian' : 'auto';
-      this.patch({ facilities, mode, loading: false });
-      const fingerprint = await this.fingerprint();
-      const result = await this.storage.readState<OptimizationResult>('result:' + fingerprint);
-      if (generation === this.generation && result?.fingerprint === fingerprint) this.patch({ result, scenario: 'after', status: 'Сохранённый расчёт восстановлен.' });
+      this.preparedResults.set('auto', result);
+      const facilities = data.facilities.map(f => ({ ...f, confirmed: !!f.legacy }));
+      this.patch({ facilities, mode: 'auto', result, prepared: true, loading: false, scenario: 'after', status: 'Готовый расчёт · 38 исходных точек' });
     } catch (error) { if (generation === this.generation) this.patch({ loading: false, error: (error as Error).message }); }
   }
-  dispose() { this.generation++; this.controller?.abort(); }
+  dispose() { this.generation++; this.presentation++; this.controller?.abort(); }
   private persist() {
     const value = { identity: this.data?.identity, facilities: facilitySettings(this.state.facilities), mode: this.state.mode };
     this.saving = this.saving.catch(() => {}).then(() => this.storage.writeState('settings', value));
     void this.saving.catch(() => this.patch({ error: 'Не удалось сохранить выбор объектов. Проверьте свободное место браузера.' }));
   }
   setFacilities(facilities: Facility[]) {
-    if (this.state.busy || !this.data) return;
+    if (this.state.prepared || this.state.busy || !this.data) return;
     // Reapply only mutable fields; source rows, names and addresses stay immutable.
     const validated = applyFacilitySettings(this.data.facilities, facilitySettings(facilities));
     this.patch({ facilities: validated, result: null, scenario: 'before', status: '', error: '' }); this.persist();
   }
   setMode(mode: TravelMode) {
     if (this.state.busy) return;
+    if (this.state.prepared) { void this.showPrepared(mode); return; }
     this.patch({ mode, result: null, scenario: 'before', status: '', error: '' }); this.persist();
+  }
+  private async showPrepared(mode: TravelMode) {
+    if (!this.data) return;
+    const generation = this.generation, presentation = ++this.presentation;
+    this.patch({ mode, prepared: true, result: null, error: '', status: 'Загрузка готового расчёта…' });
+    try {
+      const result = this.preparedResults.get(mode) || await loadPreparedResult(mode, this.data);
+      if (generation !== this.generation || presentation !== this.presentation) return;
+      this.preparedResults.set(mode, result);
+      this.patch({ result, facilities: this.data.facilities.map(f => ({ ...f, confirmed: !!f.legacy })), status: 'Готовый расчёт · 38 исходных точек' });
+    } catch (error) {
+      if (generation === this.generation && presentation === this.presentation) this.patch({ error: (error as Error).message, status: '' });
+    }
+  }
+  usePrepared() { if (!this.state.busy) void this.showPrepared(this.state.mode); }
+  useCustomParameters() {
+    if (!this.data || this.state.busy) return;
+    this.presentation++;
+    this.patch({ prepared: false, result: null, scenario: 'before', status: '', error: '' });
   }
   private async fingerprint(facilities = this.state.facilities, mode = this.state.mode) {
     if (!this.data) throw new Error('Данные ещё загружаются.');
@@ -65,7 +84,7 @@ export class OptimizationStore {
   }
   stop = () => this.controller?.abort();
   async calculate(fresh = false) {
-    if (!this.data || this.state.loading || this.controller) return;
+    if (this.state.prepared || !this.data || this.state.loading || this.controller) return;
     const candidates = this.state.facilities.filter(f => f.confirmed && f.coords);
     if (!candidates.length) { this.patch({ error: 'Подтвердите объекты приёма и их координаты в перечне учреждений.' }); return; }
     const controller = new AbortController(), generation = this.generation;

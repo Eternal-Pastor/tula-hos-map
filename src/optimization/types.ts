@@ -30,4 +30,7 @@ export interface Solution {
     savedSeconds: number | null; improved: number; worsened: number; changed: number; unreachable: number; pending: number };
 }
 export interface MatrixEntry { key: string; seconds: number | null }
-export interface OptimizationResult { solution: Solution; zones: [string, Polygon[]][]; mode: 'auto' | 'pedestrian'; at: string; fingerprint: string }
+export interface OptimizationResult {
+  solution: Solution; zones: [string, Polygon[]][]; mode: 'auto' | 'pedestrian'; at: string; fingerprint: string;
+  display?: Record<'before' | 'after', { id: string; organizationId: string | null; band: number; geometry: Polygon }[]>;
+}

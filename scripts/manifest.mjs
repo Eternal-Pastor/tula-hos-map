@@ -19,7 +19,7 @@ for (const required of ['hospital-map/index.html', 'hospital-map/developer.html'
   if (!runtimeRequired.includes(required)) throw new Error(`Build resource is missing: ${required}`);
 }
 if (!runtimeRequired.some(name => name.startsWith('hospital-map/assets/') && name.endsWith('.js'))) throw new Error('Run the Vite production build first.');
-const names = [...runtimeRequired, 'START.cmd', 'scripts/Start-Map.ps1', 'scripts/LocalMapServer.cs', 'scripts/Verify-Static.ps1', 'README.md', ...await tree('docs'), 'data/full-project.json', ...await tree('local-routing')].sort();
+const names = [...runtimeRequired, 'START.cmd', 'scripts/Start-Map.ps1', 'scripts/LocalMapServer.cs', 'scripts/Verify-Static.ps1', 'README.md', ...await tree('docs'), 'data/full-project.json', ...await tree('data/optimization'), ...await tree('local-routing')].sort();
 const files = {};
 for (const name of names) {
   const bytes = await readFile(path.join(root, name));

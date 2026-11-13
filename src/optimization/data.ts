@@ -1,5 +1,5 @@
 import { unpackSnapshot } from '../services/viewer-data';
-import type { Facility, GridCell } from './types';
+import type { Facility, GridCell, OptimizationResult } from './types';
 import type { YandexPoint } from '../types/domain';
 export const validCoords = (point: unknown): point is YandexPoint => Array.isArray(point) && point.length === 2 &&
   point.every(n => typeof n === 'number' && Number.isFinite(n)) && point[0] >= 52.4 && point[0] <= 55.4 && point[1] >= 35 && point[1] <= 39.8;
@@ -23,6 +23,21 @@ export async function loadOptimizationData() {
     address: 'Исходная точка из сохранённой карты', type: 'Исходная больница', coords: h.coords, confirmed: false, suggested: false, legacy: true }));
   return { snapshot, meta, identity: await digest({ grid: meta.checksum, registry: registry.sha256 }),
     cells: grid.cells, facilities: [...registry.facilities as Facility[], ...baseline], baseline };
+}
+export async function loadPreparedResult(mode: 'auto' | 'pedestrian', data: Awaited<ReturnType<typeof loadOptimizationData>>) {
+  const meta = await json('prepared-meta.json');
+  const item = meta.results?.[mode];
+  if (meta.version !== 1 || meta.identity !== data.identity || meta.grid !== data.meta.checksum ||
+    JSON.stringify(meta.candidates) !== JSON.stringify(data.baseline.map(f => f.id)) ||
+    item?.file !== `prepared-${mode}.json.gz`) throw new Error('Готовый расчёт не соответствует сетке или исходным 38 больницам.');
+  const response = await fetch(new URL('optimization/' + item.file, document.baseURI));
+  if (!response.ok || !response.body) throw new Error('Не удалось загрузить готовый расчёт.');
+  const text = await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).text();
+  if (await digest(text) !== item.checksum) throw new Error('Контрольная сумма готового расчёта не совпала.');
+  const result = JSON.parse(text) as OptimizationResult;
+  if (result.mode !== mode || result.fingerprint !== item.fingerprint || result.solution.rows.length !== data.cells.length || result.solution.summary.pending)
+    throw new Error('Готовый расчёт повреждён или неполон.');
+  return result;
 }
 export function applyFacilitySettings(facilities: Facility[], settings: unknown): Facility[] {
   if (!Array.isArray(settings)) throw new Error('Неверный формат перечня объектов.');

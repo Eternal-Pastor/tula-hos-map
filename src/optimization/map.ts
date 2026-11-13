@@ -21,11 +21,20 @@ export class OptimizationMap {
   private outlines: any;
   private markers: any;
   private token = 0;
+  private detailed = false;
+  private renderingDetail = false;
   constructor(private api: any, private host: YandexMapHost, private store: OptimizationStore) {
     this.map = host.create(api, { center: [54.05, 37.4], zoom: 8, controls: ['zoomControl', 'typeSelector'] }, { suppressMapOpenBlock: true });
     this.heat = new api.ObjectManager({ clusterize: false, viewportMargin: 100 });
     this.outlines = new api.GeoObjectCollection(); this.markers = new api.GeoObjectCollection();
     this.map.geoObjects.add(this.heat).add(this.outlines).add(this.markers);
+    this.map.events.add('boundschange', () => {
+      const detailed = this.map.getZoom() >= 11;
+      if (detailed !== this.detailed) {
+        this.detailed = detailed;
+        if (!this.renderingDetail) { this.renderingDetail = true; void this.draw().catch(() => {}).finally(() => { this.renderingDetail = false; }); }
+      }
+    });
     this.fit();
   }
   fit = () => this.map?.setBounds([[52.7, 35.8], [54.85, 38.6]], { checkZoomRange: true, zoomMargin: 35 });
@@ -39,7 +48,16 @@ export class OptimizationMap {
     const coordinates = (p: Polygon) => p.map(r => r.map(([lon, lat]) => [lat, lon]));
     const features: any[] = [];
     if (state.showTimes && state.result) {
-      await jobs.chunks(this.store.cells, cell => {
+      const overview = !this.detailed && state.result.display?.[state.scenario];
+      if (overview) {
+        await jobs.chunks(overview, item => {
+          const facility = item.organizationId ? facilities.get(item.organizationId) : null;
+          const label = ['до 15 мин', '15–30 мин', '30–60 мин', 'более 60 мин', 'нет маршрута'][item.band];
+          features.push({ type: 'Feature', id: item.id, geometry: { type: 'Polygon', coordinates: coordinates(item.geometry) },
+            properties: { hintContent: escape(`${facility?.name || 'Объект не назначен'} — ${label}`) },
+            options: { fillColor: timeColors[item.band], fillOpacity: state.opacity, strokeWidth: 0, zIndex: 100 } });
+        }, { budget: 6, cancelled });
+      } else await jobs.chunks(this.store.cells, cell => {
         const row = rows.get(cell.id), seconds = after ? row?.afterSeconds : row?.beforeSeconds;
         const id = after ? row?.afterId : cell.organizationId, facility = id ? facilities.get(id) : null;
         features.push({ type: 'Feature', id: cell.id, geometry: { type: 'Polygon', coordinates: coordinates(cell.geometry) },

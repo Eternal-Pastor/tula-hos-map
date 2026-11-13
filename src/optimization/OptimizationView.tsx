@@ -95,6 +95,7 @@ function OptimizationCanvas({ state, store, active }: { state: OptimizationState
     <div className="opt-map-legend"><strong>{state.scenario === 'before' ? 'Исходные' : 'Оптимизированные'} прикрепления</strong>
       {state.showZones && <p>Цветные контуры — зоны учреждений.{state.compareBoundaries && state.scenario === 'after' && ' Чёрный пунктир — исходные зоны.'}</p>}
       {state.showTimes && (state.result ? <><p>{state.mode === 'auto' ? 'На машине' : 'Пешком'} · время без пробок</p><div className="legend-bands">{timeColors.map((c, i) => <span className="legend-band" key={c}><i className="dot" style={{ background: c }} />{['≤ 15 мин', '15–30 мин', '30–60 мин', '> 60 мин', 'Нет маршрута'][i]}</span>)}</div></> : <p>Время по новой сетке появится после расчёта.</p>)}
+      {state.result?.display && <p>При приближении видны отдельные ячейки сетки и точное время.</p>}
     </div>
   </div>;
 }
@@ -105,12 +106,12 @@ export default function OptimizationView({ active }: { active: boolean }) {
   const summary = state.result?.solution.summary;
   return <div className="map-layout opt-layout"><aside className="sidebar opt-sidebar" aria-label="Параметры оптимизации">
     <section><h2>Оптимизация прикреплений</h2><p>Этап 1 · минимальное время пути</p><p className="opt-note">Сетка: города — 250 м, остальная область — 2 км. Мощность пока не ограничивает распределение.</p>
-      <Button className="w-full" variant="outline" disabled={state.loading} onClick={() => setRoster(true)}>Учреждения · {state.facilities.filter(f => f.confirmed).length} подтверждено</Button></section>
+      {state.prepared ? <p className="opt-note">Готовые результаты для 38 исходных точек. Локальный OSRM для просмотра не нужен.</p> : <Button className="w-full" variant="outline" disabled={state.loading} onClick={() => setRoster(true)}>Учреждения · {state.facilities.filter(f => f.confirmed).length} подтверждено</Button>}</section>
     <section><label htmlFor="opt-mode">Способ передвижения</label><select id="opt-mode" value={state.mode} disabled={state.busy} onChange={e => store.setMode(e.target.value as OptimizationState['mode'])}>
       <option value="auto">На машине</option><option value="pedestrian">Пешком</option></select>
-      <Button className="w-full" disabled={state.loading || state.busy || !state.facilities.some(f => f.confirmed)} onClick={() => void store.calculate()}>Рассчитать / продолжить</Button>
-      {state.busy ? <Button variant="outline" onClick={store.stop}>Остановить</Button> : <Button variant="ghost" disabled={state.loading || !state.facilities.some(f => f.confirmed)} onClick={() => void store.calculate(true)}>Пересчитать заново</Button>}
-      {(state.status || state.busy) && <><Progress value={state.busy ? state.total ? state.count / state.total * 100 : null : state.result ? 100 : 0} aria-label="Текущий этап расчёта" /><p className="opt-note" role="status">{state.status}</p></>}
+      {!state.prepared && <><Button className="w-full" disabled={state.loading || state.busy || !state.facilities.some(f => f.confirmed)} onClick={() => void store.calculate()}>Рассчитать / продолжить</Button>
+      {state.busy ? <Button variant="outline" onClick={store.stop}>Остановить</Button> : <Button variant="ghost" disabled={state.loading || !state.facilities.some(f => f.confirmed)} onClick={() => void store.calculate(true)}>Пересчитать заново</Button>}</>}
+      {(state.status || state.busy) && <>{!state.prepared && <Progress value={state.busy ? state.total ? state.count / state.total * 100 : null : state.result ? 100 : 0} aria-label="Текущий этап расчёта" />}<p className="opt-note" role="status">{state.status}</p></>}
       {state.error && <p className="opt-error" role="alert">{state.error}</p>}</section>
     <section><h3>Слои карты</h3><div className="opt-scenario" role="group" aria-label="Прикрепления до и после">
       <Button variant={state.scenario === 'before' ? 'default' : 'outline'} aria-pressed={state.scenario === 'before'} onClick={() => store.patch({ scenario: 'before' })}>До</Button>
@@ -125,10 +126,10 @@ export default function OptimizationView({ active }: { active: boolean }) {
       <div><dt>Быстрее / дольше</dt><dd>{summary.improved} / {summary.worsened}</dd></div><div><dt>Без доступного объекта</dt><dd>{summary.unreachable}</dd></div></dl>
       <p className="opt-note">Средние по сопоставимым ячейкам, без весов населения. Это сценарий доступности, перегрузка больниц пока не проверяется.</p>
       <p className="opt-note">Расчёт: {new Date(state.result!.at).toLocaleString('ru-RU')}</p><Button variant="outline" onClick={() => store.exportGeoJSON()}>Выгрузить зоны GeoJSON</Button></section>}
-    <section><Button variant="outline" disabled={state.loading || state.busy} onClick={() => void store.exportBackup()}>Сохранить расчёт</Button>
+    <section>{state.prepared ? <Button variant="outline" disabled={state.loading} onClick={() => store.useCustomParameters()}>Свой набор учреждений</Button> : <><Button variant="outline" disabled={state.busy} onClick={() => store.usePrepared()}>Вернуться к готовому расчёту</Button><Button variant="outline" disabled={state.loading || state.busy} onClick={() => void store.exportBackup()}>Сохранить расчёт</Button>
       <Button variant="outline" disabled={state.loading || state.busy} onClick={() => backup.current?.click()}>Загрузить расчёт</Button>
       <input type="file" accept=".json" hidden ref={backup} onChange={e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) void store.importBackup(file); }} />
-      <p className="opt-note">Для расчёта нужны локальные OSRM: машина — порт 5000, пешком — 5001. Смена дорожного графа требует пересчёта заново.</p></section>
+      <p className="opt-note">Для собственного расчёта нужны локальные OSRM: машина — порт 5000, пешком — 5001. Смена дорожного графа требует пересчёта заново.</p></>}</section>
   </aside><OptimizationCanvas state={state} store={store} active={active} />
     <FacilityDialog state={state} store={store} open={roster} close={() => setRoster(false)} /></div>;
 }

@@ -351,13 +351,13 @@ function MapWorkspace({
     };
   }, [host, state.loading, retry, store]);
   useEffect(() => {
-    if (map)
+    if (map && state.page === 'map')
       void map
         .draw()
         .catch(() =>
           setError("Не удалось обновить карту. Повторите подключение."),
         );
-  }, [map, state.revision]);
+  }, [map, state.revision, state.page]);
   useEffect(() => {
     if (state.page !== "map" || !map) return;
     map.resize();
@@ -519,7 +519,7 @@ function HospitalTable({
 function ViewerApp() {
   const [store] = useState(() => new ViewerStore());
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
-  const [optimizationOpened, setOptimizationOpened] = useState(false);
+  const [optimizationOpened, setOptimizationOpened] = useState(true);
   useEffect(() => { if (state.page === 'optimization') setOptimizationOpened(true); }, [state.page]);
   useEffect(() => {
     void store.start();
