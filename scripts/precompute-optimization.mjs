@@ -123,5 +123,5 @@ for (const mode of ['auto', 'pedestrian']) {
   log({ mode, stage: 'ready', ...solution.summary });
 }
 await atomic(path.join(output, 'prepared-meta.json'), JSON.stringify(artifactMeta, null, 2) + '\n');
-await (await import('./prepare-optimization-display.mjs')).prepareDisplay();
+await (await import('./fill-optimization-neighbors.mjs')).fillPreparedResults();
 log({ stage: 'complete', pairs: pairs * 2 });

@@ -54,46 +54,84 @@
   "results": {
     "auto": {
       "file": "prepared-auto.json.gz",
-      "checksum": "5715f4961838a08b8b345bc73a2813cfca1efcb8459a05462b32ce4378edaefd",
-      "fingerprint": "9568cad13b625deed4281c60cc9ea30bcaee20cb5ddcc12368c054f7604a5664",
+      "checksum": "c4c07469f50349a2e49199d86a2f277a68191a649c5e112dd853a20ddc3ebf50",
+      "fingerprint": "b641dc6be697ca02b22a822012f44bbe281c952c6da4f54376328acfcaf8f161",
       "at": "2026-11-13T11:53:34.710Z",
       "summary": {
         "cells": 19843,
-        "paired": 16723,
-        "beforeSeconds": 1095.614190037671,
-        "afterSeconds": 981.8469772170082,
-        "savedSeconds": 113.76721282067004,
-        "improved": 3882,
+        "paired": 19843,
+        "beforeSeconds": 1278.4261250818859,
+        "afterSeconds": 1147.4431972232012,
+        "savedSeconds": 130.98292785869359,
+        "improved": 4756,
         "worsened": 0,
-        "changed": 3882,
-        "unreachable": 3120,
+        "changed": 4756,
+        "unreachable": 0,
         "pending": 0
       },
       "displayPolygons": {
-        "before": 1544,
-        "after": 1295
+        "before": 624,
+        "after": 614
+      },
+      "completion": {
+        "method": "measured-neighbor-arithmetic-mean-8-v1",
+        "at": "2026-11-16T11:09:22.007Z",
+        "pairs": 118560,
+        "before": 3120,
+        "after": 3120,
+        "measuredSummary": {
+          "cells": 19843,
+          "paired": 16723,
+          "beforeSeconds": 1095.614190037671,
+          "afterSeconds": 981.8469772170082,
+          "savedSeconds": 113.76721282067004,
+          "improved": 3882,
+          "worsened": 0,
+          "changed": 3882,
+          "unreachable": 3120,
+          "pending": 0
+        }
       }
     },
     "pedestrian": {
       "file": "prepared-pedestrian.json.gz",
-      "checksum": "1abe7192719b6f0d89d133fae4a3f866c5818754e4e8ecb9c9a6b2279a20f95e",
-      "fingerprint": "f4d57ba0a40a36e77048422ffa4486fa09630fdec866e2f752390991344eaf64",
+      "checksum": "b25b09d774554742d0e1842116539d4c818811dad204b1a80b19de35f755307b",
+      "fingerprint": "20e3dcf94cd9e178df6b4a97d25d5799c559c29fba476df6ce981e8ea901e1ba",
       "at": "2026-11-13T11:55:11.214Z",
       "summary": {
         "cells": 19843,
-        "paired": 18799,
-        "beforeSeconds": 9486.552917708437,
-        "afterSeconds": 8424.892520878797,
-        "savedSeconds": 1061.6603968296267,
-        "improved": 4661,
+        "paired": 19843,
+        "beforeSeconds": 9979.502284180864,
+        "afterSeconds": 8901.870682356512,
+        "savedSeconds": 1077.6316018243142,
+        "improved": 4931,
         "worsened": 0,
-        "changed": 4661,
-        "unreachable": 1044,
+        "changed": 4931,
+        "unreachable": 0,
         "pending": 0
       },
       "displayPolygons": {
-        "before": 876,
-        "after": 753
+        "before": 378,
+        "after": 310
+      },
+      "completion": {
+        "method": "measured-neighbor-arithmetic-mean-8-v1",
+        "at": "2026-11-16T11:10:15.444Z",
+        "pairs": 39672,
+        "before": 1044,
+        "after": 1044,
+        "measuredSummary": {
+          "cells": 19843,
+          "paired": 18799,
+          "beforeSeconds": 9486.552917708437,
+          "afterSeconds": 8424.892520878797,
+          "savedSeconds": 1061.6603968296267,
+          "improved": 4661,
+          "worsened": 0,
+          "changed": 4661,
+          "unreachable": 1044,
+          "pending": 0
+        }
       }
     }
   }

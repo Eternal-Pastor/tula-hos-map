@@ -69,6 +69,8 @@ function FacilityDialog({ state, store, open, close }: { state: OptimizationStat
 function OptimizationCanvas({ state, store, active }: { state: OptimizationState; store: OptimizationStore; active: boolean }) {
   const [host, setHost] = useState<YandexMapHost | null>(null), [renderer, setRenderer] = useState<OptimizationMap | null>(null);
   const [error, setError] = useState(''), [retry, setRetry] = useState(0), [drawing, setDrawing] = useState(false);
+  const drawingSource = useRef<OptimizationState['result'] | undefined>(undefined);
+  const drawingRenderer = useRef<OptimizationMap | null>(null);
   const ready = useCallback((value: YandexMapHost | null) => setHost(value), []);
   const [started, setStarted] = useState(active);
   useEffect(() => { if (active) setStarted(true); }, [active]);
@@ -83,8 +85,11 @@ function OptimizationCanvas({ state, store, active }: { state: OptimizationState
   }, [host, state.loading, store, retry, started]);
   useEffect(() => {
     if (!renderer) return;
-    let alive = true; setDrawing(true);
-    void renderer.draw().catch(e => { if (alive) setError(e.message); }).finally(() => { if (alive) setDrawing(false); });
+    let alive = true;
+    if (drawingSource.current !== state.result || drawingRenderer.current !== renderer) setDrawing(true);
+    void renderer.draw().then(() => {
+      if (alive) { drawingSource.current = state.result; drawingRenderer.current = renderer; }
+    }).catch(e => { if (alive) setError(e.message); }).finally(() => { if (alive) setDrawing(false); });
     return () => { alive = false; };
   }, [renderer, state.result, state.scenario, state.showZones, state.showTimes, state.opacity, state.compareBoundaries]);
   useEffect(() => { if (active && renderer) renderer.resize(); }, [active, renderer]);
@@ -94,8 +99,8 @@ function OptimizationCanvas({ state, store, active }: { state: OptimizationState
     {error && <div className="opt-map-status opt-error" role="alert">{error}<Button variant="outline" onClick={() => setRetry(n => n + 1)}>Повторить</Button></div>}
     <div className="opt-map-legend"><strong>{state.scenario === 'before' ? 'Исходные' : 'Оптимизированные'} прикрепления</strong>
       {state.showZones && <p>Цветные контуры — зоны учреждений.{state.compareBoundaries && state.scenario === 'after' && ' Чёрный пунктир — исходные зоны.'}</p>}
-      {state.showTimes && (state.result ? <><p>{state.mode === 'auto' ? 'На машине' : 'Пешком'} · время без пробок</p><div className="legend-bands">{timeColors.map((c, i) => <span className="legend-band" key={c}><i className="dot" style={{ background: c }} />{['≤ 15 мин', '15–30 мин', '30–60 мин', '> 60 мин', 'Нет маршрута'][i]}</span>)}</div></> : <p>Время по новой сетке появится после расчёта.</p>)}
-      {state.result?.display && <p>При приближении видны отдельные ячейки сетки и точное время.</p>}
+      {state.showTimes && (state.result ? <><p>{state.mode === 'auto' ? 'На машине' : 'Пешком'} · время без пробок</p><div className="legend-bands">{timeColors.map((c, i) => <span className="legend-band" key={c}><i className="dot" style={{ background: c }} />{['≤ 15 мин', '15–30 мин', '30–60 мин', '> 60 мин'][i]}</span>)}</div></> : <p>Время по новой сетке появится после расчёта.</p>)}
+      {state.result?.display && <p>При приближении видны отдельные ячейки сетки и время пути.</p>}
     </div>
   </div>;
 }
@@ -123,7 +128,7 @@ export default function OptimizationView({ active }: { active: boolean }) {
     {summary && <section><h3>Сравнение на одной сетке</h3><dl className="opt-metrics"><div><dt>Среднее до</dt><dd>{min(summary.beforeSeconds)}</dd></div>
       <div><dt>Среднее после</dt><dd>{min(summary.afterSeconds)}</dd></div><div><dt>Среднее сокращение</dt><dd>{min(summary.savedSeconds)}</dd></div>
       <div><dt>Сопоставимых ячеек</dt><dd>{summary.paired.toLocaleString('ru-RU')} / {summary.cells.toLocaleString('ru-RU')}</dd></div>
-      <div><dt>Быстрее / дольше</dt><dd>{summary.improved} / {summary.worsened}</dd></div><div><dt>Без доступного объекта</dt><dd>{summary.unreachable}</dd></div></dl>
+      <div><dt>Быстрее / дольше</dt><dd>{summary.improved} / {summary.worsened}</dd></div><div><dt>Изменено прикреплений</dt><dd>{summary.changed}</dd></div></dl>
       <p className="opt-note">Средние по сопоставимым ячейкам, без весов населения. Это сценарий доступности, перегрузка больниц пока не проверяется.</p>
       <p className="opt-note">Расчёт: {new Date(state.result!.at).toLocaleString('ru-RU')}</p><Button variant="outline" onClick={() => store.exportGeoJSON()}>Выгрузить зоны GeoJSON</Button></section>}
     <section>{state.prepared ? <Button variant="outline" disabled={state.loading} onClick={() => store.useCustomParameters()}>Свой набор учреждений</Button> : <><Button variant="outline" disabled={state.busy} onClick={() => store.usePrepared()}>Вернуться к готовому расчёту</Button><Button variant="outline" disabled={state.loading || state.busy} onClick={() => void store.exportBackup()}>Сохранить расчёт</Button>
