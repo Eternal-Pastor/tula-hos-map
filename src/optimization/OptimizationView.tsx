@@ -94,7 +94,7 @@ function OptimizationCanvas({ state, store, active, sync, scenario, id }: {
       if (alive) { drawingSource.current = state.result; drawingRenderer.current = renderer; }
     }).catch(e => { if (alive) setError(e.message); }).finally(() => { if (alive) setDrawing(false); });
     return () => { alive = false; };
-  }, [renderer, state.result, state.scenario, state.showZones, state.showTimes, state.opacity, state.compareBoundaries, state.theme]);
+  }, [renderer, state.result, state.scenario, state.showZones, state.showTimes, state.opacity, state.compareBoundaries, state.theme, state.focusChanges]);
   useEffect(() => { if (active && renderer) renderer.resize(); }, [active, renderer, state.comparison]);
   const selected = scenario || state.scenario, before = selected === 'before';
   return <div className="opt-map-panel">
@@ -114,7 +114,8 @@ function ComparisonLegend({ state }: { state: OptimizationState }) {
   return <div className="opt-map-legend" role="region" aria-label="Как читать карту">
     <strong>{state.theme === 'attachment' ? 'Каждый цвет — отдельное учреждение' : gains ? 'На сколько сократилось время пути' : 'Время от ячейки до закреплённой больницы'}</strong>
     {!!bands.length && <div className="legend-bands">{bands.filter((_, i) => !gains || i !== 4 || !!state.result?.solution.summary.worsened).map(([color, label]) => <span className="legend-band" key={label}><i className="dot" style={{ background: color }} />{label}</span>)}</div>}
-    {state.showZones && <p>{state.compareBoundaries && state.comparison === 'overlay' && state.scenario === 'after' ? 'Сплошные цветные границы — после. Чёрный пунктир — до.' : 'Цветные границы — зоны прикрепления.'}</p>}
+    {state.focusChanges && state.theme !== 'attachment' && <p><i className="dot" style={{ background: '#f2edda' }} /> Светлый фон — прежнее прикрепление. Цвет — ячейки с новой больницей.</p>}
+    {state.showZones && <p>{state.compareBoundaries && state.comparison === 'overlay' && state.scenario === 'after' ? 'Сплошная граница — после. Синий пунктир — до.' : state.theme === 'attachment' ? 'Границы разделяют учреждения.' : 'Тёмные линии — границы прикреплений.'}</p>}
     <p>Нажмите на ячейку: больница и время до и после.</p>
   </div>;
 }
@@ -153,7 +154,7 @@ export default function OptimizationView({ active }: { active: boolean }) {
   useEffect(() => { void store.start(); return () => store.dispose(); }, [store]);
   const summary = state.result?.solution.summary;
   const saving = summary?.savedSeconds ?? 0;
-  const theme = (value: OptimizationState['theme']) => store.patch({ theme: value, showTimes: value !== 'attachment', showZones: value === 'attachment' || value === 'time',
+  const theme = (value: OptimizationState['theme']) => store.patch({ theme: value, showTimes: value !== 'attachment', showZones: value === 'attachment', compareBoundaries: false,
     ...(value === 'gain' ? { comparison: 'overlay' as const, scenario: 'after' as const, compareBoundaries: false } : {}) });
   return <div className="map-layout opt-layout"><aside className="sidebar opt-sidebar" aria-label="Сравнение распределения">
     <section><h2>Что изменилось после оптимизации</h2><p className="opt-note">38 исходных точек · города 250 м · остальная область 2 км</p>
@@ -166,15 +167,17 @@ export default function OptimizationView({ active }: { active: boolean }) {
       ['side', 'Рядом', 'Две карты на одном масштабе'], ['swipe', 'Ползунок', 'До слева, после справа'], ['overlay', 'Наложение', 'Слои на одной карте'],
     ] as const).map(([value, title, text]) => <Button key={value} variant={state.comparison === value ? 'default' : 'outline'} aria-pressed={state.comparison === value} onClick={() => {
       store.patch({ comparison: value, ...(value !== 'overlay' && state.theme === 'gain' ? { theme: 'time' as const, showTimes: true } : {}),
-        ...(value === 'overlay' ? { scenario: 'after' as const, showZones: true, compareBoundaries: true } : { compareBoundaries: false }) });
+        showZones: state.theme === 'attachment', compareBoundaries: value === 'overlay' && state.theme === 'attachment',
+        ...(value === 'overlay' ? { scenario: 'after' as const } : {}) });
     }}><strong>{title}</strong><span>{text}</span></Button>)}</div></section>
     <section><h3>2. Что показывает карта</h3><div className="opt-theme-options">{([
       ['time', 'Время пути'], ['attachment', 'Зоны прикрепления'], ['gain', 'Где стало быстрее'],
     ] as const).map(([value, label]) => <Button key={value} variant={state.theme === value ? 'default' : 'outline'} aria-pressed={state.theme === value} onClick={() => theme(value)}>{label}</Button>)}</div>
       {state.comparison === 'overlay' && state.theme !== 'gain' && <div className="opt-scenario" role="group" aria-label="Какие данные показать"><Button variant={state.scenario === 'before' ? 'default' : 'outline'} aria-pressed={state.scenario === 'before'} onClick={() => store.patch({ scenario: 'before' })}>До</Button><Button variant={state.scenario === 'after' ? 'default' : 'outline'} aria-pressed={state.scenario === 'after'} onClick={() => store.patch({ scenario: 'after' })}>После</Button></div>}
       {state.theme !== 'attachment' && <label className="opt-check"><input type="checkbox" checked={state.showZones} onChange={e => store.patch({ showZones: e.target.checked })} />Границы прикреплений поверх цвета</label>}
+      {state.theme !== 'attachment' && <label className="opt-check"><input type="checkbox" checked={state.focusChanges} onChange={e => store.patch({ focusChanges: e.target.checked })} />Выделить ячейки с новой больницей</label>}
       {state.comparison === 'overlay' && state.scenario === 'after' && <label className="opt-check"><input type="checkbox" checked={state.compareBoundaries} onChange={e => store.patch({ compareBoundaries: e.target.checked, showZones: true })} />Исходные границы пунктиром</label>}
-      {state.showTimes && <><label htmlFor="opt-opacity">Прозрачность цветного слоя</label><input id="opt-opacity" type="range" min="0.15" max="0.85" step="0.05" value={state.opacity} onChange={e => store.patch({ opacity: Number(e.target.value) })} /></>}
+      {state.showTimes && <><label htmlFor="opt-opacity">Насыщенность заливки</label><input id="opt-opacity" type="range" min="0.35" max="1" step="0.05" value={state.opacity} onChange={e => store.patch({ opacity: Number(e.target.value) })} /></>}
     </section>
     {state.error && <section><p className="opt-error" role="alert">{state.error}</p></section>}
     <section><details className="opt-extra"><summary>Свой расчёт и выгрузка</summary><div>

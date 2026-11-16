@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { prepareDisplayBoundaries } from './prepare-display-boundaries.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const read = file => readFile(path.join(root, file));
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -40,5 +41,6 @@ export async function prepareDisplay() {
     meta.results[mode].displayPolygons = { before: result.display.before.length, after: result.display.after.length };
   }
   await writeFile(path.join(root, 'public/optimization/prepared-meta.json'), JSON.stringify(meta, null, 2) + '\n');
+  await prepareDisplayBoundaries();
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await prepareDisplay();

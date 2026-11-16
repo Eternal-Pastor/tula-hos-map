@@ -33,5 +33,7 @@ export interface MatrixEntry { key: string; seconds: number | null }
 export interface OptimizationResult {
   solution: Solution; zones: [string, Polygon[]][]; mode: 'auto' | 'pedestrian'; at: string; fingerprint: string;
   allocation?: { method: string; pedestrianLimitSeconds: number; meanCandidates: string; cells: number; carOnly: number; mean: number; changed: number };
+  boundaries?: Record<'before' | 'after', [string, Polygon[]][]>;
+  boundaryMethod?: string;
   display?: Record<'before' | 'after', { id: string; organizationId: string | null; band: number; geometry: Polygon }[]>;
 }

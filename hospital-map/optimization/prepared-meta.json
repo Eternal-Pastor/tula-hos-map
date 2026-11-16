@@ -54,7 +54,7 @@
   "results": {
     "auto": {
       "file": "prepared-auto.json.gz",
-      "checksum": "2588d85764a56c1a960cdd49791401f70db609ff8e740cc38d80dee72fdeefc8",
+      "checksum": "9cd1be13308a2e373d6e36f872eba50ad53121c246a058e29ced2630a4dbc60a",
       "fingerprint": "df1473d848ce4a8458d00c2b2dec7f15b5f4bafc159a93f7497d0d3ad58fe4f5",
       "at": "2026-11-13T11:53:34.710Z",
       "summary": {
@@ -95,7 +95,7 @@
     },
     "pedestrian": {
       "file": "prepared-pedestrian.json.gz",
-      "checksum": "3e1f5a508afe31cd6bdbcc22959e8b174500cb8fb363d4ea7a47c709933d666a",
+      "checksum": "f352b195b7d885e0c0ab534405bdc565790fa2fd41233877da481de68b984c63",
       "fingerprint": "28641b3f632c27c74d2fbc716169e6761040dc38ade5ee3e9a0b2e126199ec86",
       "at": "2026-11-13T11:55:11.214Z",
       "summary": {
@@ -147,5 +147,10 @@
     "afterScore": 1438.5190155218395,
     "checksum": "320a02ceec85532eb3ab1e5de886ad95f9aeec159cf92c0d7e8ba7a1bfa69092",
     "at": "2026-11-16T11:39:48.364Z"
+  },
+  "displayBoundaries": {
+    "method": "display-dissolve-clean-2m-v1",
+    "toleranceMeters": 2,
+    "assignmentUnchanged": true
   }
 }

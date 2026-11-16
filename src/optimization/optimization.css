@@ -17,7 +17,8 @@
 .opt-comparison-caption span { font-size: 11px; color: var(--muted-foreground); }
 .opt-comparison-stage { position: relative; flex: 1; min-height: 420px; background: var(--muted); overflow: hidden; }
 .opt-view-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2px; }
-.opt-map-slot, .opt-map-panel { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; }
+.opt-map-slot, .opt-map-panel { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; overflow: hidden; isolation: isolate; contain: layout paint; }
+.opt-header-label { font-size: 13px; font-weight: 600; color: var(--muted-foreground); }
 .opt-view-swipe > .opt-map-slot { position: absolute; inset: 0; }
 .opt-slot-before { z-index: 1; }
 .opt-view-swipe > .opt-slot-after { z-index: 2; }

@@ -84,6 +84,8 @@ export class OptimizationMap {
       this.pane.getElement().appendChild(canvas);
     }
     this.markers = new api.GeoObjectCollection(); this.map.geoObjects.add(this.markers);
+    // Land-use and administrative tile colours must not compete with the data palette.
+    this.map.panes.get('ground').getElement().style.filter = 'grayscale(1) contrast(0.8) brightness(1.08)';
     this.pane.events.add('clientpixelschange', this.schedule);
     this.pane.events.add('viewportchange', this.schedule);
     this.pane.events.add('actionend', this.schedule);
@@ -147,7 +149,8 @@ export class OptimizationMap {
       this.rows = new Map(state.result?.solution.rows.map(r => [r.cellId, r]) || []);
       this.result = state.result; this.heatSignature = ''; this.borderSignature = '';
       const geometries = [...(state.result?.display?.before || []).map(f => f.geometry), ...(state.result?.display?.after || []).map(f => f.geometry),
-        ...this.store.zones.flatMap(([, parts]) => parts), ...(state.result?.zones || []).flatMap(([, parts]) => parts)];
+        ...this.store.zones.flatMap(([, parts]) => parts), ...(state.result?.zones || []).flatMap(([, parts]) => parts),
+        ...(state.result?.boundaries?.before || []).flatMap(([, parts]) => parts), ...(state.result?.boundaries?.after || []).flatMap(([, parts]) => parts)];
       await jobs.chunks(geometries, geometry => { this.shape(geometry); }, { budget: 5, cancelled });
       if (cancelled()) return;
     }
@@ -188,45 +191,60 @@ export class OptimizationMap {
     this.heat.style.opacity = String(state.opacity);
     this.heat.style.display = state.showTimes && state.result ? '' : 'none';
     this.borders.style.display = state.showZones ? '' : 'none';
-    const heatSignature = state.scenario + ':' + state.showTimes + ':' + state.theme;
+    const heatSignature = state.scenario + ':' + state.showTimes + ':' + state.theme + ':' + state.focusChanges;
     if (moved || heatSignature !== this.heatSignature) {
       this.heatSignature = heatSignature;
       const context = setup(this.heat);
       if (state.showTimes && state.result) {
         const gains = state.theme === 'gain';
-        const overview = !gains && zoom < 11 && state.result.display?.[state.scenario];
+        const overview = !gains && !state.focusChanges && zoom < 11 && state.result.display?.[state.scenario];
         const colors = gains ? gainColors : timeColors, bands = colors.map(() => new Path2D());
+        if (state.focusChanges) {
+          const background = new Path2D();
+          for (const [, polygons] of this.store.zones) for (const geometry of polygons) {
+            const shape = this.shape(geometry); if (overlaps(shape.bounds, box)) background.addPath(shape.path);
+          }
+          context.fillStyle = '#f2edda'; context.fill(background, 'evenodd');
+        }
         if (overview) {
           for (const feature of overview) {
             const shape = this.shape(feature.geometry);
             if (feature.band >= 0 && feature.band < 4 && overlaps(shape.bounds, box)) bands[feature.band].addPath(shape.path);
           }
         } else for (const index of this.visibleCells(box)) {
-          const row = this.rows.get(this.store.cells[index].id), band = gains ? gainBand(row?.deltaSeconds) : timeBand(state.scenario === 'after' ? row?.afterSeconds : row?.beforeSeconds);
+          const row = this.rows.get(this.store.cells[index].id);
+          if (state.focusChanges && row?.beforeId === row?.afterId) continue;
+          const band = gains ? gainBand(row?.deltaSeconds) : timeBand(state.scenario === 'after' ? row?.afterSeconds : row?.beforeSeconds);
           if (band >= 0) bands[band].addPath(this.cellShapes[index].path);
         }
         bands.forEach((path, band) => { context.fillStyle = colors[band]; context.fill(path, 'evenodd'); });
       }
     }
-    const borderSignature = [state.scenario, state.showTimes, state.showZones, state.compareBoundaries].join(':');
+    const borderSignature = [state.scenario, state.showTimes, state.showZones, state.compareBoundaries, state.theme].join(':');
     if (moved || borderSignature !== this.borderSignature) {
       this.borderSignature = borderSignature;
       const context = setup(this.borders);
       const paintZones = (zones: [string, Polygon[]][], reference = false) => {
-        context.lineWidth = (reference ? 1.25 : 2.25) / scale;
+        context.lineWidth = (reference ? 1.1 : 1.4) / scale;
+        context.lineJoin = 'round'; context.lineCap = 'round';
         context.setLineDash(reference ? [6 / scale, 4 / scale] : []);
         for (const [id, polygons] of zones) {
-          context.strokeStyle = reference ? '#333333' : facilityColor(id); context.fillStyle = facilityColor(id);
+          context.strokeStyle = reference ? '#345c9c' : state.theme === 'attachment' ? facilityColor(id) : '#34434a';
           for (const polygon of polygons) {
             const shape = this.shape(polygon); if (!overlaps(shape.bounds, box)) continue;
-            if (!state.showTimes && !reference) { context.globalAlpha = 0.15; context.fill(shape.path, 'evenodd'); context.globalAlpha = 1; }
             context.stroke(shape.path);
           }
         }
       };
       if (state.showZones) {
-        paintZones(state.scenario === 'after' ? state.result?.zones || [] : this.store.zones);
-        if (state.scenario === 'after' && state.compareBoundaries) paintZones(this.store.zones, true);
+        const source = state.scenario === 'after' ? state.result?.zones || [] : this.store.zones;
+        if (!state.showTimes) for (const [id, polygons] of source) {
+          const region = new Path2D();
+          for (const polygon of polygons) { const shape = this.shape(polygon); if (overlaps(shape.bounds, box)) region.addPath(shape.path); }
+          context.globalAlpha = 0.3; context.fillStyle = facilityColor(id); context.fill(region, 'evenodd'); context.globalAlpha = 1;
+        }
+        paintZones(state.result?.boundaries?.[state.scenario] || source);
+        if (state.scenario === 'after' && state.compareBoundaries) paintZones(state.result?.boundaries?.before || this.store.zones, true);
       }
     }
   }
