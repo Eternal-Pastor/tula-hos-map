@@ -13,3 +13,4 @@ dist/
 public/workers/
 .idea/
 *.iml
+src/optimization/generated/

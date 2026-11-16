@@ -7,8 +7,8 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "node scripts/build-workers.mjs && vite --host 127.0.0.1",
-    "typecheck": "tsc --noEmit",
+    "dev": "node scripts/embed-optimization-data.mjs && node scripts/build-workers.mjs && vite --host 127.0.0.1",
+    "typecheck": "node scripts/embed-optimization-data.mjs && tsc --noEmit",
     "test": "node scripts/build-workers.mjs && node local-routing/build-engine.mjs && node --test tests/*.test.mjs",
     "build": "npm run typecheck && node scripts/build-workers.mjs && node local-routing/build-engine.mjs && vite build && node scripts/manifest.mjs",
     "package": "npm run build && node scripts/package.mjs"

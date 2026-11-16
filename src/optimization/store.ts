@@ -1,4 +1,4 @@
-import type { Polygon, TravelMode } from '../types/domain';
+import type { Hospital, Polygon, TravelMode } from '../types/domain';
 import type { Facility, GridCell, MatrixEntry, OptimizationResult } from './types';
 import { applyFacilitySettings, digest, download, facilitySettings, loadOptimizationData, loadPreparedResult } from './data';
 import { buildOutlines, optimizer } from './engine';
@@ -11,11 +11,12 @@ export interface OptimizationState {
   scenario: 'before' | 'after'; showZones: boolean; showTimes: boolean; opacity: number; compareBoundaries: boolean;
   comparison: 'side' | 'swipe' | 'overlay'; divider: number; theme: 'time' | 'gain' | 'attachment';
   focusChanges: boolean;
+  card: { kind: 'hospital'; id: string } | { kind: 'cell'; id: string } | null;
 }
 export class OptimizationStore {
   private state: OptimizationState = { loading: true, busy: false, prepared: true, error: '', status: '', count: 0, total: 0,
     facilities: [], mode: 'auto', result: null, scenario: 'before', showZones: false, showTimes: true, opacity: 0.75, compareBoundaries: false,
-    comparison: 'overlay', divider: 50, theme: 'gain', focusChanges: true };
+    comparison: 'overlay', divider: 50, theme: 'gain', focusChanges: true, card: null };
   private listeners = new Set<() => void>();
   private generation = 0;
   private controller?: AbortController;
@@ -27,6 +28,7 @@ export class OptimizationStore {
   cells: GridCell[] = [];
   baseline: Facility[] = [];
   zones: [string, Polygon[]][] = [];
+  getHospital(id: string): Hospital | undefined { return this.data?.snapshot.hospitals.find(h => h.id === id); }
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; };
   getSnapshot = () => this.state;
   patch(patch: Partial<OptimizationState>) { this.state = { ...this.state, ...patch }; this.listeners.forEach(fn => fn()); }

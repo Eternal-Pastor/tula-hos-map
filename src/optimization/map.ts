@@ -59,6 +59,8 @@ export class OptimizationMap {
   private heatSignature = '';
   private borderSignature = '';
   private hovered = '';
+  private markerHover = false;
+  private suppressMapClickUntil = 0;
   private observer: ResizeObserver;
   private ready = false;
   private bucket = 0.025;
@@ -159,9 +161,18 @@ export class OptimizationMap {
     const signature = visible.map(f => f.id + ':' + f.coords?.join(',')).join('|');
     if (signature !== this.markerSignature) {
       this.markers.removeAll();
-      for (const f of visible) if (f.coords) this.markers.add(new this.api.Placemark(f.coords,
-        { hintContent: escape(f.name), balloonContent: escape(f.organization + '. ' + f.name + '. ' + f.address) },
-        { preset: 'islands#circleDotIcon', iconColor: facilityColor(f.id), zIndex: 500 }));
+      for (const f of visible) if (f.coords) {
+        const marker = new this.api.Placemark(f.coords, { hintContent: escape(f.name) },
+          { preset: 'islands#circleDotIcon', iconColor: facilityColor(f.id), zIndex: 500, openBalloonOnClick: false });
+        marker.events.add('click', (event: any) => {
+          event.preventDefault(); event.stopPropagation();
+          this.suppressMapClickUntil = Date.now() + 250; this.map.hint.close();
+          this.store.patch({ card: { kind: 'hospital', id: f.id } });
+        });
+        marker.events.add('mouseenter', () => { this.markerHover = true; this.map.hint.close(); });
+        marker.events.add('mouseleave', () => { this.markerHover = false; });
+        this.markers.add(marker);
+      }
       this.markerSignature = signature;
     }
     this.ready = true; this.schedule();
@@ -259,7 +270,7 @@ export class OptimizationMap {
     return { facility, row, title: `${facility?.name || ''} — ${minutes(after ? row?.afterSeconds : row?.beforeSeconds)}` };
   }
   private hover = (event: any) => {
-    if (!this.ready) return;
+    if (!this.ready || this.markerHover) return;
     const coords = event.get('coords'); if (!coords) return;
     const cell = this.cellAt(coords);
     if (!cell) { this.hovered = ''; this.map.hint.close(); return; }
@@ -268,13 +279,9 @@ export class OptimizationMap {
     this.hovered = key; this.map.hint.open(coords, escape(this.label(cell).title));
   };
   private click = (event: any) => {
-    if (!this.ready || event.get('target') !== this.map) return;
+    if (!this.ready || Date.now() < this.suppressMapClickUntil || event.get('target') !== this.map) return;
     const coords = event.get('coords'), cell = coords && this.cellAt(coords); if (!cell) return;
-    const { facility, row, title } = this.label(cell);
-    const before = row?.beforeId ? this.facilities.get(row.beforeId)?.name : '', after = row?.afterId ? this.facilities.get(row.afterId)?.name : '';
-    const change = row?.deltaSeconds == null ? '' : row.deltaSeconds > 0.01 ? `Быстрее на ${minutes(row.deltaSeconds)}` : row.deltaSeconds < -0.01 ? `Дольше на ${minutes(-row.deltaSeconds)}` : 'Время не изменилось';
-    this.map.balloon.open(coords, { contentHeader: 'Изменение для выбранной ячейки', contentBody:
-      `<div class="opt-cell-card"><p><strong>До:</strong> ${escape(before || '')}<br>${escape(minutes(row?.beforeSeconds))}</p><p><strong>После:</strong> ${escape(after || '')}<br>${escape(minutes(row?.afterSeconds))}</p><strong>${escape(change)}</strong></div>` });
+    this.map.hint.close(); this.store.patch({ card: { kind: 'cell', id: cell.id } });
   };
   dispose() {
     this.token++; this.ready = false; if (this.frame) cancelAnimationFrame(this.frame);

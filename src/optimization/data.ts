@@ -1,40 +1,41 @@
 import { unpackSnapshot } from '../services/viewer-data';
 import type { Facility, GridCell, OptimizationResult } from './types';
 import type { YandexPoint } from '../types/domain';
+import { registry, gridMeta, preparedMeta } from './generated/manifest';
 export const validCoords = (point: unknown): point is YandexPoint => Array.isArray(point) && point.length === 2 &&
   point.every(n => typeof n === 'number' && Number.isFinite(n)) && point[0] >= 52.4 && point[0] <= 55.4 && point[1] >= 35 && point[1] <= 39.8;
 export async function digest(value: unknown) {
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(typeof value === 'string' ? value : JSON.stringify(value)));
   return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
-async function json(file: string) {
-  const response = await fetch(new URL('optimization/' + file, document.baseURI));
-  if (!response.ok) throw new Error('Не удалось загрузить ' + file);
-  return response.json();
+interface DataPack { encoding: string; checksum: string; data: string }
+async function unpack<T>(pack: DataPack): Promise<T> {
+  if (pack.encoding !== 'gzip-base64') throw new Error('Неверный формат встроенных данных.');
+  const bytes = Uint8Array.from(atob(pack.data), c => c.charCodeAt(0));
+  const text = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  if (await digest(text) !== pack.checksum) throw new Error('Встроенные данные повреждены.');
+  return JSON.parse(text) as T;
 }
+let embeddedGrid: Promise<{ cells: GridCell[] }> | undefined;
 export async function loadOptimizationData() {
-  const [snapshot, registry, meta] = await Promise.all([unpackSnapshot(window.HospitalViewerData), json('facilities.json'), json('grid-meta.json')]);
-  const response = await fetch(new URL('optimization/grid.json.gz', document.baseURI));
-  if (!response.ok || !response.body) throw new Error('Не удалось загрузить сетку оптимизации.');
-  const text = await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).text();
-  if (await digest(text) !== meta.checksum || meta.snapshot !== window.HospitalViewerData.checksum) throw new Error('Сетка не соответствует исходной карте.');
-  const grid = JSON.parse(text) as { cells: GridCell[] };
+  const meta = gridMeta;
+  const [snapshot, grid] = await Promise.all([unpackSnapshot(window.HospitalViewerData),
+    embeddedGrid ??= import('./generated/grid').then(m => unpack<{ cells: GridCell[] }>(m.default)).catch(error => { embeddedGrid = undefined; throw error; })]);
+  if (meta.snapshot !== window.HospitalViewerData.checksum) throw new Error('Сетка не соответствует исходной карте.');
   const baseline: Facility[] = snapshot.hospitals.map(h => ({ id: h.id, organizationId: h.id, organization: h.name, name: h.name,
     address: 'Исходная точка из сохранённой карты', type: 'Исходная больница', coords: h.coords, confirmed: false, suggested: false, legacy: true }));
   return { snapshot, meta, identity: await digest({ grid: meta.checksum, registry: registry.sha256 }),
     cells: grid.cells, facilities: [...registry.facilities as Facility[], ...baseline], baseline };
 }
 export async function loadPreparedResult(mode: 'auto' | 'pedestrian', data: Awaited<ReturnType<typeof loadOptimizationData>>) {
-  const meta = await json('prepared-meta.json');
+  const meta = preparedMeta;
   const item = meta.results?.[mode];
   if (meta.version !== 1 || meta.identity !== data.identity || meta.grid !== data.meta.checksum ||
     JSON.stringify(meta.candidates) !== JSON.stringify(data.baseline.map(f => f.id)) ||
     item?.file !== `prepared-${mode}.json.gz`) throw new Error('Готовый расчёт не соответствует сетке или исходным 38 больницам.');
-  const response = await fetch(new URL('optimization/' + item.file, document.baseURI));
-  if (!response.ok || !response.body) throw new Error('Не удалось загрузить готовый расчёт.');
-  const text = await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).text();
-  if (await digest(text) !== item.checksum) throw new Error('Контрольная сумма готового расчёта не совпала.');
-  const result = JSON.parse(text) as OptimizationResult;
+  const pack = mode === 'auto' ? (await import('./generated/auto')).default : (await import('./generated/pedestrian')).default;
+  if (pack.checksum !== item.checksum) throw new Error('Контрольная сумма готового расчёта не совпала.');
+  const result = await unpack<OptimizationResult>(pack);
   if (result.mode !== mode || result.fingerprint !== item.fingerprint || result.solution.rows.length !== data.cells.length || result.solution.summary.pending)
     throw new Error('Готовый расчёт повреждён или неполон.');
   return result;
