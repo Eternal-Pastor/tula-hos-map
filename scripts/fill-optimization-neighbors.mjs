@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fillMatrixFromNeighbors } from '../src/optimization/neighbor-mean.js';
-import { prepareDisplay } from './prepare-optimization-display.mjs';
+import { prepareJointAllocation } from './prepare-joint-allocation.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const read = file => readFile(path.join(root, file));
@@ -46,6 +46,6 @@ export async function fillPreparedResults() {
     console.log(JSON.stringify({ mode, stage: 'filled', cells: solution.summary.cells, filledBefore, filledAfter, summary: solution.summary }));
   }
   await atomic('public/optimization/prepared-meta.json', JSON.stringify(meta, null, 2) + '\n');
-  await prepareDisplay();
+  await prepareJointAllocation();
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await fillPreparedResults();

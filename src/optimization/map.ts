@@ -3,6 +3,7 @@ import type { YandexMapHost } from '../components/YandexMap';
 import type { OptimizationStore } from './store';
 import type { Polygon } from '../types/domain';
 import type { GridCell, OptimizationResult } from './types';
+import type { MapViewSync } from './map-sync';
 
 export const facilityColor = (id: string) => {
   let hash = 2166136261; for (const c of id) hash = Math.imul(hash ^ c.charCodeAt(0), 16777619);
@@ -19,6 +20,9 @@ const escape = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '
 const minutes = (n: number | null | undefined) => n == null ? '—' : Math.round(n / 60) + ' мин';
 type Box = [number, number, number, number];
 type Shape = { path: Path2D; bounds: Box; geometry: Polygon };
+const sharedPaths = new WeakMap<object, WeakMap<Polygon, Shape>>();
+export const gainColors = ['#f0e8bf', '#c0e3ce', '#63b58a', '#167248', '#d35f6b'];
+export const gainBand = (seconds: number | null | undefined) => seconds == null || Math.abs(seconds) <= 0.01 ? 0 : seconds < 0 ? 4 : seconds <= 300 ? 1 : seconds <= 900 ? 2 : 3;
 const overlaps = (a: Box, b: Box) => a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];
 const contains = (point: number[], polygon: Polygon) => {
   const ringContains = (ring: number[][]) => {
@@ -59,28 +63,43 @@ export class OptimizationMap {
   private ready = false;
   private bucket = 0.025;
   private extent: Box = [Infinity, Infinity, -Infinity, -Infinity];
+  private detachSync?: () => void;
+  private readState = () => {
+    const state = this.store.getSnapshot();
+    return this.fixedScenario ? { ...state, scenario: this.fixedScenario } : state;
+  };
 
-  constructor(private api: any, private host: YandexMapHost, private store: OptimizationStore) {
-    this.map = host.create(api, { center: [54.05, 37.4], zoom: 8, controls: ['zoomControl', 'typeSelector'] }, { suppressMapOpenBlock: true });
+  constructor(private api: any, private host: YandexMapHost, private store: OptimizationStore,
+    private sync?: MapViewSync, private fixedScenario?: 'before' | 'after') {
+    const camera = sync?.camera;
+    this.map = host.create(api, { center: camera?.center || [54.05, 37.4], zoom: camera?.zoom ?? 8, controls: ['zoomControl'] }, { suppressMapOpenBlock: true });
     this.projection = this.map.options.get('projection');
+    if (!sharedPaths.has(this.projection)) sharedPaths.set(this.projection, new WeakMap());
+    this.paths = sharedPaths.get(this.projection)!;
     this.anchor = this.projection.toGlobalPixels([54, 37], 0);
-    this.pane = new api.pane.StaticPane(this.map, { zIndex: 250, css: { pointerEvents: 'none' } });
+    this.pane = new api.pane.MovablePane(this.map, { zIndex: 250, margin: 192, overflow: 'visible', css: { pointerEvents: 'none' } });
     this.map.panes.append('optimization-canvas', this.pane);
     for (const canvas of [this.heat, this.borders]) {
       Object.assign(canvas.style, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none' });
       this.pane.getElement().appendChild(canvas);
     }
     this.markers = new api.GeoObjectCollection(); this.map.geoObjects.add(this.markers);
-    this.map.events.add('boundschange', this.schedule);
     this.pane.events.add('clientpixelschange', this.schedule);
+    this.pane.events.add('viewportchange', this.schedule);
+    this.pane.events.add('actionend', this.schedule);
     this.map.events.add('mousemove', this.hover);
     this.map.events.add('mouseleave', () => { this.hovered = ''; this.map?.hint.close(); });
     this.map.events.add('click', this.click);
-    this.observer = new ResizeObserver(() => { this.viewport = ''; this.schedule(); });
+    this.observer = new ResizeObserver(() => {
+      const element = this.map?.container.getElement();
+      if (element?.clientWidth && element.clientHeight) this.map.container.fitToViewport();
+      this.viewport = ''; this.schedule();
+    });
     this.observer.observe(this.map.container.getElement());
-    this.fit();
+    this.detachSync = sync?.register(this.map);
+    if (!camera) this.fit();
   }
-  fit = () => this.map?.setBounds([[52.7, 35.8], [54.85, 38.6]], { checkZoomRange: true, zoomMargin: 35 });
+  fit = () => { this.sync?.activate(this.map); return this.map?.setBounds([[52.7, 35.8], [54.85, 38.6]], { checkZoomRange: true, zoomMargin: 35 }); };
   resize = () => { this.map?.container.fitToViewport(); this.viewport = ''; this.schedule(); };
   private schedule = () => {
     if (!this.map || !this.ready || this.frame) return;
@@ -111,7 +130,7 @@ export class OptimizationMap {
     return found;
   }
   async draw() {
-    const token = ++this.token, state = this.store.getSnapshot();
+    const token = ++this.token, state = this.readState();
     const cancelled = () => token !== this.token || !this.map;
     if (this.indexedCells !== this.store.cells) {
       this.ready = false; this.cellShapes = []; this.bins.clear(); this.extent = [Infinity, Infinity, -Infinity, -Infinity];
@@ -145,11 +164,15 @@ export class OptimizationMap {
     this.ready = true; this.schedule();
   }
   private paint() {
-    const state = this.store.getSnapshot(), size = this.map.container.getSize(), width = size[0], height = size[1];
+    const state = this.readState(), paneView = this.pane.getViewport();
+    const left = Math.floor(paneView[0][0]), top = Math.floor(paneView[0][1]);
+    const width = Math.ceil(paneView[1][0] - left), height = Math.ceil(paneView[1][1] - top);
     if (!width || !height) return;
-    const zoom = this.map.getZoom(), scale = 2 ** zoom, origin = this.pane.toClientPixels(this.projection.toGlobalPixels([54, 37], zoom));
+    // Use the moving pane's own zoom and coordinate system throughout an animation.
+    const zoom = this.pane.getZoom(), scale = 2 ** zoom, anchor = this.pane.toClientPixels(this.projection.toGlobalPixels([54, 37], zoom));
+    const origin = [anchor[0] - left, anchor[1] - top];
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const viewport = [width, height, zoom, origin[0], origin[1], dpr].join(':');
+    const viewport = [left, top, width, height, zoom, origin[0], origin[1], dpr].join(':');
     const moved = viewport !== this.viewport; this.viewport = viewport;
     const box: Box = [-origin[0] / scale, -origin[1] / scale, (width - origin[0]) / scale, (height - origin[1]) / scale];
     const setup = (canvas: HTMLCanvasElement) => {
@@ -157,6 +180,7 @@ export class OptimizationMap {
         canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
         canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
       }
+      canvas.style.left = left + 'px'; canvas.style.top = top + 'px';
       const context = canvas.getContext('2d')!;
       context.setTransform(1, 0, 0, 1, 0, 0); context.clearRect(0, 0, canvas.width, canvas.height);
       context.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * origin[0], dpr * origin[1]); return context;
@@ -164,23 +188,24 @@ export class OptimizationMap {
     this.heat.style.opacity = String(state.opacity);
     this.heat.style.display = state.showTimes && state.result ? '' : 'none';
     this.borders.style.display = state.showZones ? '' : 'none';
-    const heatSignature = state.scenario + ':' + state.showTimes;
+    const heatSignature = state.scenario + ':' + state.showTimes + ':' + state.theme;
     if (moved || heatSignature !== this.heatSignature) {
       this.heatSignature = heatSignature;
       const context = setup(this.heat);
       if (state.showTimes && state.result) {
-        const overview = zoom < 11 && state.result.display?.[state.scenario];
-        const bands = timeColors.map(() => new Path2D());
+        const gains = state.theme === 'gain';
+        const overview = !gains && zoom < 11 && state.result.display?.[state.scenario];
+        const colors = gains ? gainColors : timeColors, bands = colors.map(() => new Path2D());
         if (overview) {
           for (const feature of overview) {
             const shape = this.shape(feature.geometry);
             if (feature.band >= 0 && feature.band < 4 && overlaps(shape.bounds, box)) bands[feature.band].addPath(shape.path);
           }
         } else for (const index of this.visibleCells(box)) {
-          const row = this.rows.get(this.store.cells[index].id), band = timeBand(state.scenario === 'after' ? row?.afterSeconds : row?.beforeSeconds);
+          const row = this.rows.get(this.store.cells[index].id), band = gains ? gainBand(row?.deltaSeconds) : timeBand(state.scenario === 'after' ? row?.afterSeconds : row?.beforeSeconds);
           if (band >= 0) bands[band].addPath(this.cellShapes[index].path);
         }
-        bands.forEach((path, band) => { context.fillStyle = timeColors[band]; context.fill(path, 'evenodd'); });
+        bands.forEach((path, band) => { context.fillStyle = colors[band]; context.fill(path, 'evenodd'); });
       }
     }
     const borderSignature = [state.scenario, state.showTimes, state.showZones, state.compareBoundaries].join(':');
@@ -211,7 +236,7 @@ export class OptimizationMap {
     return null;
   }
   private label(cell: GridCell) {
-    const state = this.store.getSnapshot(), row = this.rows.get(cell.id), after = state.scenario === 'after';
+    const state = this.readState(), row = this.rows.get(cell.id), after = state.scenario === 'after';
     const id = after ? row?.afterId : cell.organizationId, facility = id ? this.facilities.get(id) : null;
     return { facility, row, title: `${facility?.name || ''} — ${minutes(after ? row?.afterSeconds : row?.beforeSeconds)}` };
   }
@@ -220,7 +245,7 @@ export class OptimizationMap {
     const coords = event.get('coords'); if (!coords) return;
     const cell = this.cellAt(coords);
     if (!cell) { this.hovered = ''; this.map.hint.close(); return; }
-    const key = cell.id + ':' + this.store.getSnapshot().scenario;
+    const key = cell.id + ':' + this.readState().scenario;
     if (key === this.hovered) return;
     this.hovered = key; this.map.hint.open(coords, escape(this.label(cell).title));
   };
@@ -228,10 +253,13 @@ export class OptimizationMap {
     if (!this.ready || event.get('target') !== this.map) return;
     const coords = event.get('coords'), cell = coords && this.cellAt(coords); if (!cell) return;
     const { facility, row, title } = this.label(cell);
-    this.map.balloon.open(coords, { contentHeader: escape(title), contentBody: escape(`${facility?.organization || ''}. До: ${minutes(row?.beforeSeconds)}. После: ${minutes(row?.afterSeconds)}. Ячейка ${cell.step} м.`) });
+    const before = row?.beforeId ? this.facilities.get(row.beforeId)?.name : '', after = row?.afterId ? this.facilities.get(row.afterId)?.name : '';
+    const change = row?.deltaSeconds == null ? '' : row.deltaSeconds > 0.01 ? `Быстрее на ${minutes(row.deltaSeconds)}` : row.deltaSeconds < -0.01 ? `Дольше на ${minutes(-row.deltaSeconds)}` : 'Время не изменилось';
+    this.map.balloon.open(coords, { contentHeader: 'Изменение для выбранной ячейки', contentBody:
+      `<div class="opt-cell-card"><p><strong>До:</strong> ${escape(before || '')}<br>${escape(minutes(row?.beforeSeconds))}</p><p><strong>После:</strong> ${escape(after || '')}<br>${escape(minutes(row?.afterSeconds))}</p><strong>${escape(change)}</strong></div>` });
   };
   dispose() {
     this.token++; this.ready = false; if (this.frame) cancelAnimationFrame(this.frame);
-    this.observer.disconnect(); this.host.destroy(); this.map = null;
+    this.detachSync?.(); this.observer.disconnect(); this.host.destroy(); this.map = null;
   }
 }

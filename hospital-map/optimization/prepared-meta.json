@@ -54,24 +54,24 @@
   "results": {
     "auto": {
       "file": "prepared-auto.json.gz",
-      "checksum": "c4c07469f50349a2e49199d86a2f277a68191a649c5e112dd853a20ddc3ebf50",
-      "fingerprint": "b641dc6be697ca02b22a822012f44bbe281c952c6da4f54376328acfcaf8f161",
+      "checksum": "2588d85764a56c1a960cdd49791401f70db609ff8e740cc38d80dee72fdeefc8",
+      "fingerprint": "df1473d848ce4a8458d00c2b2dec7f15b5f4bafc159a93f7497d0d3ad58fe4f5",
       "at": "2026-11-13T11:53:34.710Z",
       "summary": {
         "cells": 19843,
         "paired": 19843,
         "beforeSeconds": 1278.4261250818859,
-        "afterSeconds": 1147.4431972232012,
-        "savedSeconds": 130.98292785869359,
-        "improved": 4756,
-        "worsened": 0,
-        "changed": 4756,
+        "afterSeconds": 1148.583080305395,
+        "savedSeconds": 129.84304477649874,
+        "improved": 4582,
+        "worsened": 147,
+        "changed": 4729,
         "unreachable": 0,
         "pending": 0
       },
       "displayPolygons": {
         "before": 624,
-        "after": 614
+        "after": 615
       },
       "completion": {
         "method": "measured-neighbor-arithmetic-mean-8-v1",
@@ -95,24 +95,24 @@
     },
     "pedestrian": {
       "file": "prepared-pedestrian.json.gz",
-      "checksum": "b25b09d774554742d0e1842116539d4c818811dad204b1a80b19de35f755307b",
-      "fingerprint": "20e3dcf94cd9e178df6b4a97d25d5799c559c29fba476df6ce981e8ea901e1ba",
+      "checksum": "3e1f5a508afe31cd6bdbcc22959e8b174500cb8fb363d4ea7a47c709933d666a",
+      "fingerprint": "28641b3f632c27c74d2fbc716169e6761040dc38ade5ee3e9a0b2e126199ec86",
       "at": "2026-11-13T11:55:11.214Z",
       "summary": {
         "cells": 19843,
         "paired": 19843,
         "beforeSeconds": 9979.502284180864,
-        "afterSeconds": 8901.870682356512,
-        "savedSeconds": 1077.6316018243142,
-        "improved": 4931,
-        "worsened": 0,
-        "changed": 4931,
+        "afterSeconds": 9290.147529985416,
+        "savedSeconds": 689.3547541954399,
+        "improved": 3758,
+        "worsened": 970,
+        "changed": 4729,
         "unreachable": 0,
         "pending": 0
       },
       "displayPolygons": {
         "before": 378,
-        "after": 310
+        "after": 370
       },
       "completion": {
         "method": "measured-neighbor-arithmetic-mean-8-v1",
@@ -134,5 +134,18 @@
         }
       }
     }
+  },
+  "allocation": {
+    "method": "joint-travel-time-v1",
+    "pedestrianLimitSeconds": 3600,
+    "meanCandidates": "all-38",
+    "cells": 19843,
+    "carOnly": 12620,
+    "mean": 7223,
+    "changed": 4729,
+    "beforeScore": 1657.4072916141645,
+    "afterScore": 1438.5190155218395,
+    "checksum": "320a02ceec85532eb3ab1e5de886ad95f9aeec159cf92c0d7e8ba7a1bfa69092",
+    "at": "2026-11-16T11:39:48.364Z"
   }
 }

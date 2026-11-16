@@ -9,10 +9,12 @@ export interface OptimizationState {
   loading: boolean; busy: boolean; prepared: boolean; error: string; status: string; count: number; total: number;
   facilities: Facility[]; mode: TravelMode; result: OptimizationResult | null;
   scenario: 'before' | 'after'; showZones: boolean; showTimes: boolean; opacity: number; compareBoundaries: boolean;
+  comparison: 'side' | 'swipe' | 'overlay'; divider: number; theme: 'time' | 'gain' | 'attachment';
 }
 export class OptimizationStore {
   private state: OptimizationState = { loading: true, busy: false, prepared: true, error: '', status: '', count: 0, total: 0,
-    facilities: [], mode: 'auto', result: null, scenario: 'before', showZones: true, showTimes: true, opacity: 0.5, compareBoundaries: false };
+    facilities: [], mode: 'auto', result: null, scenario: 'before', showZones: true, showTimes: true, opacity: 0.5, compareBoundaries: false,
+    comparison: 'side', divider: 50, theme: 'time' };
   private listeners = new Set<() => void>();
   private generation = 0;
   private controller?: AbortController;

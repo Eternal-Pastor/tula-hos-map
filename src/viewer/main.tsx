@@ -310,6 +310,8 @@ function MapWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   const latestPage = useRef(state.page);
+  const [mapStarted, setMapStarted] = useState(state.page === 'map');
+  useEffect(() => { if (state.page === 'map') setMapStarted(true); }, [state.page]);
   const pendingInitialFit = useRef<ViewerMap | null>(null);
   useLayoutEffect(() => {
     latestPage.current = state.page;
@@ -319,7 +321,7 @@ function MapWorkspace({
     [],
   );
   useEffect(() => {
-    if (!host || state.loading) return;
+    if (!host || state.loading || !mapStarted) return;
     let active = true,
       renderer: ViewerMap | undefined;
     setConnecting(true);
@@ -349,7 +351,7 @@ function MapWorkspace({
       renderer?.dispose();
       setMap(null);
     };
-  }, [host, state.loading, retry, store]);
+  }, [host, state.loading, retry, store, mapStarted]);
   useEffect(() => {
     if (map && state.page === 'map')
       void map
